@@ -9,11 +9,11 @@ const ConnectionFinder = () => {
     yourName: ''
   });
   
-  // API keys should be entered by users for security
+  // Load API keys from environment variables (development only)
   const [apiKeys, setApiKeys] = useState({
-    openai: '',
-    googleSearch: '',
-    googleCSE: ''
+    openai: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_OPENAI_API_KEY || '' : '',
+    googleSearch: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_GOOGLE_SEARCH_API_KEY || '' : '',
+    googleCSE: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_GOOGLE_CSE_ID || '' : ''
   });
   
   const [connections, setConnections] = useState([]);
@@ -662,11 +662,19 @@ Return ONLY a JSON array with this structure:
               </div>
             </div>
             
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <p className="text-sm text-blue-800">
-                <strong>🔒 Security Note:</strong> Your API keys are stored locally in your browser and never sent to our servers. 
-                Get your keys from: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline">OpenAI</a> | 
-                <a href="https://developers.google.com/custom-search/v1/introduction" target="_blank" rel="noopener noreferrer" className="underline ml-1">Google Custom Search</a>
+            <div className={`border rounded-md p-4 ${process.env.NODE_ENV === 'development' ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
+              <p className={`text-sm ${process.env.NODE_ENV === 'development' ? 'text-green-800' : 'text-blue-800'}`}>
+                {process.env.NODE_ENV === 'development' ? (
+                  <>
+                    <strong>🔧 Development Mode:</strong> API keys are loaded from your .env file automatically.
+                  </>
+                ) : (
+                  <>
+                    <strong>🔒 Production Mode:</strong> Enter your API keys below. They are stored locally in your browser and never sent to our servers. 
+                    Get your keys from: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline">OpenAI</a> | 
+                    <a href="https://developers.google.com/custom-search/v1/introduction" target="_blank" rel="noopener noreferrer" className="underline ml-1">Google Custom Search</a>
+                  </>
+                )}
               </p>
             </div>
           </div>
