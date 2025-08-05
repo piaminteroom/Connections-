@@ -9,13 +9,12 @@ const ConnectionFinder = () => {
     yourName: ''
   });
   
-  // Load API keys from environment variables
-  const apiKeys = {
-    openai: process.env.REACT_APP_OPENAI_API_KEY,
-    hunter: process.env.REACT_APP_HUNTER_API_KEY,
-    googleSearch: process.env.REACT_APP_GOOGLE_SEARCH_API_KEY,
-    googleCSE: process.env.REACT_APP_GOOGLE_CSE_ID
-  };
+  // API keys should be entered by users for security
+  const [apiKeys, setApiKeys] = useState({
+    openai: '',
+    googleSearch: '',
+    googleCSE: ''
+  });
   
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -508,7 +507,7 @@ Return ONLY a JSON array with this structure:
 
   const discoverConnections = async () => {
     if (!apiKeys.openai || !apiKeys.googleSearch || !apiKeys.googleCSE) {
-      alert('Missing API keys! Please check your .env file and make sure REACT_APP_OPENAI_API_KEY, REACT_APP_GOOGLE_SEARCH_API_KEY, and REACT_APP_GOOGLE_CSE_ID are set.');
+      alert('Missing API keys! Please enter your OpenAI API Key, Google Search API Key, and Google CSE ID in the API Configuration section above.');
       return;
     }
 
@@ -612,12 +611,70 @@ Return ONLY a JSON array with this structure:
           <p className="text-lg text-gray-600">Google Search API finds real LinkedIn profiles with verified emails</p>
         </div>
 
+        {/* API Keys Section */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">🔑 API Configuration</h2>
+            <div className="text-sm text-green-600 font-medium">
+              Status: {apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? '✅ All Configured' : '❌ Missing Keys'}
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  OpenAI API Key *
+                </label>
+                <input
+                  type="password"
+                  value={apiKeys.openai}
+                  onChange={(e) => setApiKeys({...apiKeys, openai: e.target.value})}
+                  placeholder="sk-..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Google Search API Key *
+                </label>
+                <input
+                  type="password"
+                  value={apiKeys.googleSearch}
+                  onChange={(e) => setApiKeys({...apiKeys, googleSearch: e.target.value})}
+                  placeholder="AIza..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Google Custom Search Engine ID *
+                </label>
+                <input
+                  type="password"
+                  value={apiKeys.googleCSE}
+                  onChange={(e) => setApiKeys({...apiKeys, googleCSE: e.target.value})}
+                  placeholder="Your CSE ID..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <p className="text-sm text-blue-800">
+                <strong>🔒 Security Note:</strong> Your API keys are stored locally in your browser and never sent to our servers. 
+                Get your keys from: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline">OpenAI</a> | 
+                <a href="https://developers.google.com/custom-search/v1/introduction" target="_blank" rel="noopener noreferrer" className="underline ml-1">Google Custom Search</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Target Information</h2>
-            <div className="text-sm text-green-600 font-medium">
-              API Keys: {apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? '✅ All Configured' : '❌ Missing from .env'}
-            </div>
           </div>
           
           <div className="space-y-4">
