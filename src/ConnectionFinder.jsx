@@ -63,14 +63,14 @@ const ConnectionFinder = () => {
     // Former Colleague searches - people from your previous company now at target company  
     if (previousCompany) {
       prioritySearches.push(
-        // More inclusive searches that catch people who worked at previous company
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}"`,
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (former OR previous OR ex OR worked)`,
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (experience OR alumni OR team)`,
-        `site:linkedin.com/in/ "${companyName}" "formerly ${previousCompany}" OR "ex-${previousCompany}"`,
-        // Additional patterns for work history
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (years OR time OR tenure)`,
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" -school -university -college`
+        // Search for people currently at target company who previously worked at your company
+        `site:linkedin.com/in/ "at ${companyName}" "${previousCompany}" (former OR previous OR ex)`,
+        `site:linkedin.com/in/ "works at ${companyName}" "${previousCompany}"`,
+        `site:linkedin.com/in/ "${companyName}" "formerly ${previousCompany}" OR "previously ${previousCompany}"`,
+        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (worked OR experience) -school -university`,
+        // Additional patterns ensuring they're currently at target company
+        `site:linkedin.com/in/ "@ ${companyName}" "${previousCompany}"`,
+        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (alumni OR team OR colleague) -school`
       );
     }
     
@@ -163,22 +163,37 @@ const ConnectionFinder = () => {
     
     for (const result of searchResults) {
       if (result.link && result.link.includes('linkedin.com/in/')) {
-        // Extract basic info without OpenAI to save quota
-        const basicProfile = {
-          linkedinUrl: result.link,
-          title: result.title,
-          snippet: result.snippet,
-          company: companyName,
-          // Extract name from title (basic parsing)
-          name: extractNameFromTitle(result.title),
-          // Extract job title from snippet (basic parsing)  
-          jobTitle: extractJobTitleFromSnippet(result.snippet),
-          source: 'Google Search'
-        };
+        // Check if the profile actually mentions working at the target company
+        const titleAndSnippet = `${result.title} ${result.snippet}`.toLowerCase();
+        const companyLower = companyName.toLowerCase();
         
-        // Only add if we found a name
-        if (basicProfile.name) {
-          profiles.push(basicProfile);
+        // Validate that they currently work at target company
+        const currentlyWorksAtTarget = 
+          titleAndSnippet.includes(`at ${companyLower}`) ||
+          titleAndSnippet.includes(`@ ${companyLower}`) ||
+          titleAndSnippet.includes(`${companyLower}`) && 
+          (titleAndSnippet.includes('current') || titleAndSnippet.includes('present') || 
+           titleAndSnippet.includes('works at') || titleAndSnippet.includes('working at') ||
+           !titleAndSnippet.includes('former') && !titleAndSnippet.includes('ex-') && !titleAndSnippet.includes('previous'));
+        
+        if (currentlyWorksAtTarget) {
+          // Extract basic info without OpenAI to save quota
+          const basicProfile = {
+            linkedinUrl: result.link,
+            title: result.title,
+            snippet: result.snippet,
+            company: companyName,
+            // Extract name from title (basic parsing)
+            name: extractNameFromTitle(result.title),
+            // Extract job title from snippet (basic parsing)  
+            jobTitle: extractJobTitleFromSnippet(result.snippet),
+            source: 'Google Search'
+          };
+          
+          // Only add if we found a name
+          if (basicProfile.name) {
+            profiles.push(basicProfile);
+          }
         }
       }
     }
