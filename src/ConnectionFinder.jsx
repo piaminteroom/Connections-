@@ -9,11 +9,12 @@ const ConnectionFinder = () => {
     yourName: ''
   });
   
-  // Load API keys from environment variables (development only)
+  // Load API keys from environment variables
   const [apiKeys, setApiKeys] = useState({
-    openai: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_OPENAI_API_KEY || '' : '',
-    googleSearch: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_GOOGLE_SEARCH_API_KEY || '' : '',
-    googleCSE: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_GOOGLE_CSE_ID || '' : ''
+    openai: process.env.REACT_APP_OPENAI_API_KEY || '',
+    googleSearch: process.env.REACT_APP_GOOGLE_SEARCH_API_KEY || '',
+    googleCSE: process.env.REACT_APP_GOOGLE_CSE_ID || '',
+    hunter: process.env.REACT_APP_HUNTER_API_KEY || ''
   });
   
   const [connections, setConnections] = useState([]);
@@ -472,7 +473,7 @@ Return ONLY a JSON array with this structure:
         responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         const aiEnrichments = JSON.parse(responseText);
         
-        // Merge AI enrichments with original profile data, preserving important fields like linkedinUrl
+        // Merge AI enri hellooooo testing chments with original profile data, preserving important fields like linkedinUrl
         enrichedProfiles = profiles.map(profile => {
           const aiData = aiEnrichments.find(ai => ai.name === profile.name) || {};
           return {
