@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Building, GraduationCap, Mail, ExternalLink, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Search, User, Building2, GraduationCap, Mail, ExternalLink, Check, AlertCircle, Loader2 } from 'lucide-react';
 
 const ConnectionFinder = () => {
   const [formData, setFormData] = useState({
@@ -16,54 +16,44 @@ const ConnectionFinder = () => {
     googleCSE: process.env.REACT_APP_GOOGLE_CSE_ID || '',
     hunter: process.env.REACT_APP_HUNTER_API_KEY || ''
   });
-  
+
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchComplete, setSearchComplete] = useState(false);
   const [extractionLog, setExtractionLog] = useState([]);
 
-  const addLog = (message, type) => {
-    setExtractionLog(prev => [...prev, { 
-      message, 
-      type: type || 'info', 
-      timestamp: new Date().toLocaleTimeString() 
+  const addLog = (message, type = 'info') => {
+    setExtractionLog(prev => [...prev, {
+      message,
+      type,
+      timestamp: new Date().toLocaleTimeString()
     }]);
   };
 
   const generateLinkedInSearchStrings = (companyName) => {
-    // Generate precise Boolean search strings for LinkedIn profiles
     const searches = [
-      `site:linkedin.com/in/ "${companyName}" (software engineer OR developer OR "software development")`,
+      `site:linkedin.com/in/ "${companyName}" (software engineer OR developer)`,
       `site:linkedin.com/in/ "${companyName}" (product manager OR "product management")`,
-      `site:linkedin.com/in/ "${companyName}" (data scientist OR "data science" OR analytics)`,
-      `site:linkedin.com/in/ "${companyName}" (designer OR "user experience" OR UX)`,
-      `site:linkedin.com/in/ "${companyName}" (marketing OR "growth marketing")`,
-      `site:linkedin.com/in/ "${companyName}" (sales OR "business development")`,
-      `site:linkedin.com/in/ "${companyName}" (HR OR "human resources" OR recruiting)`,
-      `site:linkedin.com/in/ "${companyName}" (executive OR director OR VP OR "vice president")`,
-      `site:linkedin.com/in/ "${companyName}" (engineer OR engineering)`,
-      `site:linkedin.com/in/ "${companyName}" (manager OR lead OR senior)`
+      `site:linkedin.com/in/ "${companyName}" (data scientist OR "data science")`,
+      `site:linkedin.com/in/ "${companyName}" (designer OR "user experience")`,
+      `site:linkedin.com/in/ "${companyName}" (marketing OR sales)`,
+      `site:linkedin.com/in/ "${companyName}" (engineering OR manager)`
     ];
     return searches;
   };
 
-  // NEW: Generate priority searches for school alumni and former colleagues
   const generatePriorityConnectionSearches = (companyName, school, previousCompany) => {
     const prioritySearches = [];
     
-    // School Alumni searches - people from your school now at target company
     if (school) {
       prioritySearches.push(
-        // Reduced to just 2 most effective searches to conserve API quota
         `site:linkedin.com/in/ "${companyName}" "${school}" (alumni OR graduated OR studied)`,
         `site:linkedin.com/in/ "${companyName}" "${school}" (university OR college OR school)`
       );
     }
     
-    // Former Colleague searches - people from your previous company now at target company  
     if (previousCompany) {
       prioritySearches.push(
-        // Reduced to just 2 most effective searches to conserve API quota
         `site:linkedin.com/in/ "${companyName}" "${previousCompany}"`,
         `site:linkedin.com/in/ "${companyName}" "former ${previousCompany}"`
       );
@@ -72,7 +62,6 @@ const ConnectionFinder = () => {
     return prioritySearches;
   };
 
-  // Priority search for school alumni and former colleagues
   const searchPriorityConnections = async (companyName, school, previousCompany) => {
     addLog(`PRIORITY SEARCH: Looking for ${school} alumni and ${previousCompany} colleagues at ${companyName}...`, 'info');
     
@@ -84,7 +73,7 @@ const ConnectionFinder = () => {
       addLog(`Priority search: ${searchQuery.substring(0, 70)}...`, 'info');
       
       try {
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Much longer delay for priority searches
+        await new Promise(resolve => setTimeout(resolve, 5000));
         
         const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=8`);
         
@@ -102,7 +91,6 @@ const ConnectionFinder = () => {
         
         if (data.items) {
           const profiles = await extractProfilesFromSearchResults(data.items, companyName);
-          // Mark these as priority connections
           const priorityMarkedProfiles = profiles.map(profile => ({
             ...profile,
             isPriorityConnection: true,
@@ -121,7 +109,6 @@ const ConnectionFinder = () => {
       }
     }
     
-    // Summary of what we found
     const schoolAlumni = priorityProfiles.filter(p => p.priorityReason && p.priorityReason.includes('Alumni')).length;
     const workAlumni = priorityProfiles.filter(p => p.priorityReason && p.priorityReason.includes('Colleague')).length;
     addLog(`PRIORITY SUMMARY: ${schoolAlumni} school alumni, ${workAlumni} work alumni (${priorityProfiles.length} total)`, 'info');
@@ -129,53 +116,14 @@ const ConnectionFinder = () => {
     return priorityProfiles;
   };
 
-  const searchGoogleForLinkedInProfiles = async (companyName) => {
-    addLog(`Searching Google for real ${companyName} LinkedIn profiles...`, 'info');
-    
-    const searchStrings = generateLinkedInSearchStrings(companyName);
-    const allProfiles = [];
-    
-    for (let i = 0; i < Math.min(searchStrings.length, 3); i++) {
-      const searchQuery = searchStrings[i];
-      addLog(`Searching: ${searchQuery.substring(0, 80)}...`, 'info');
-      
-      try {
-        await new Promise(resolve => setTimeout(resolve, 4000)); // Rate limiting
-        
-        const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=10`);
-        
-        if (!response.ok) {
-          addLog(`Google Search API error: ${response.status}`, 'error');
-          continue;
-        }
-        
-        const data = await response.json();
-        
-        if (data.items) {
-          const profiles = await extractProfilesFromSearchResults(data.items, companyName);
-          allProfiles.push(...profiles);
-          addLog(`Found ${profiles.length} real LinkedIn profiles from this search`, 'success');
-        }
-        
-      } catch (error) {
-        addLog(`Search failed: ${error.message}`, 'error');
-        continue;
-      }
-    }
-    
-    return allProfiles;
-  };
-
   const extractProfilesFromSearchResults = async (searchResults, companyName) => {
     const profiles = [];
     
     for (const result of searchResults) {
       if (result.link && result.link.includes('linkedin.com/in/')) {
-        // Check if the profile actually mentions working at the target company
         const titleAndSnippet = `${result.title} ${result.snippet}`.toLowerCase();
         const companyLower = companyName.toLowerCase();
         
-        // Validate that they currently work at target company
         const hasAtCompany = titleAndSnippet.includes(`at ${companyLower}`);
         const hasAtSymbol = titleAndSnippet.includes(`@ ${companyLower}`);
         const hasCompanyName = titleAndSnippet.includes(`${companyLower}`);
@@ -186,7 +134,6 @@ const ConnectionFinder = () => {
         const currentlyWorksAtTarget = hasAtCompany || hasAtSymbol || 
           (hasCompanyName && (hasCurrentIndicators || !hasFormerIndicators));
         
-        // Debug logging
         if (hasCompanyName) {
           console.log(`Profile check for ${companyName}:`, {
             title: result.title,
@@ -201,20 +148,16 @@ const ConnectionFinder = () => {
         }
         
         if (currentlyWorksAtTarget) {
-          // Extract basic info without OpenAI to save quota
           const basicProfile = {
             linkedinUrl: result.link,
             title: result.title,
             snippet: result.snippet,
             company: companyName,
-            // Extract name from title (basic parsing)
             name: extractNameFromTitle(result.title),
-            // Extract job title from snippet (basic parsing)  
             jobTitle: extractJobTitleFromSnippet(result.snippet),
             source: 'Google Search'
           };
           
-          // Only add if we found a name
           if (basicProfile.name) {
             profiles.push(basicProfile);
           }
@@ -225,18 +168,13 @@ const ConnectionFinder = () => {
     return profiles;
   };
 
-  // Helper function to extract name from LinkedIn title
   const extractNameFromTitle = (title) => {
     if (!title) return null;
     
-    // LinkedIn titles usually start with the person's name
-    // e.g. "John Smith - Software Engineer at Google | LinkedIn"
     const match = title.match(/^([^-|]+)/);
     if (match) {
       let name = match[1].trim();
-      // Remove common prefixes
       name = name.replace(/^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?)\s+/i, '');
-      // Basic validation - should have at least first and last name
       if (name.split(' ').length >= 2 && name.length > 3) {
         return name;
       }
@@ -244,11 +182,9 @@ const ConnectionFinder = () => {
     return null;
   };
 
-  // Helper function to extract job title from snippet
   const extractJobTitleFromSnippet = (snippet) => {
     if (!snippet) return 'Professional';
     
-    // Look for common job title patterns
     const titlePatterns = [
       /(?:works as|working as|employed as)\s+([^.]+)/i,
       /(?:^|\s)([A-Z][a-z]+\s+(?:Engineer|Manager|Director|Developer|Designer|Analyst|Specialist|Coordinator|Assistant|Associate|Lead|Senior|Principal))/,
@@ -263,181 +199,6 @@ const ConnectionFinder = () => {
     }
     
     return 'Professional';
-  };
-
-
-
-  const searchAdditionalLinkedInProfiles = async (companyName) => {
-    addLog(`Searching for additional ${companyName} LinkedIn profiles...`, 'info');
-    
-    try {
-      // Additional targeted searches for different roles and seniority levels
-      const additionalSearches = [
-        `site:linkedin.com/in/ "${companyName}" (CEO OR founder OR "chief executive")`,
-        `site:linkedin.com/in/ "${companyName}" (CTO OR "chief technology" OR "head of engineering")`,
-        `site:linkedin.com/in/ "${companyName}" (senior OR principal OR staff OR lead)`,
-        `site:linkedin.com/in/ "${companyName}" (intern OR junior OR associate OR coordinator)`
-      ];
-      
-      const profiles = [];
-      
-      for (let i = 0; i < Math.min(additionalSearches.length, 2); i++) {
-        const searchQuery = additionalSearches[i];
-        addLog(`Additional search: ${searchQuery.substring(0, 60)}...`, 'info');
-        
-        try {
-          await new Promise(resolve => setTimeout(resolve, 5000));
-          
-          const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=8`);
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.items) {
-              const searchProfiles = await extractProfilesFromSearchResults(data.items, companyName);
-              profiles.push(...searchProfiles);
-              addLog(`Found ${searchProfiles.length} additional profiles`, 'success');
-            }
-          }
-        } catch (error) {
-          addLog(`Additional search failed: ${error.message}`, 'error');
-          continue;
-        }
-      }
-      
-      return profiles;
-      
-    } catch (error) {
-      addLog(`Additional profile search failed: ${error.message}`, 'error');
-      return [];
-    }
-  };
-
-  const getCompanyDomain = async (companyName) => {
-    try {
-      // Common company domain mappings for major companies
-      const knownDomains = { 
-        'microsoft': 'microsoft.com',
-        'google': 'google.com', 
-        'alphabet': 'google.com',
-        'apple': 'apple.com',
-        'amazon': 'amazon.com',
-        'meta': 'meta.com',
-        'facebook': 'meta.com',
-        'netflix': 'netflix.com',
-        'tesla': 'tesla.com',
-        'uber': 'uber.com',
-        'airbnb': 'airbnb.com',
-        'stripe': 'stripe.com',
-        'salesforce': 'salesforce.com',
-        'adobe': 'adobe.com',
-        'nvidia': 'nvidia.com',
-        'intel': 'intel.com',
-        'ibm': 'ibm.com',
-        'oracle': 'oracle.com',
-        'cisco': 'cisco.com',
-        'paypal': 'paypal.com',
-        'linkedin': 'linkedin.com',
-        'twitter': 'twitter.com',
-        'snap': 'snap.com',
-        'snapchat': 'snap.com',
-        'pinterest': 'pinterest.com',
-        'reddit': 'reddit.com',
-        'zoom': 'zoom.us',
-        'slack': 'slack.com',
-        'shopify': 'shopify.com',
-        'square': 'squareup.com',
-        'dropbox': 'dropbox.com',
-        'spotify': 'spotify.com',
-        'twilio': 'twilio.com'
-      };
-      
-      const companyKey = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
-      
-      // Check if we have a known domain mapping
-      if (knownDomains[companyKey]) {
-        return knownDomains[companyKey];
-      }
-      
-      // For unknown companies, use standard domain format
-      return `${companyKey}.com`;
-      
-    } catch (error) {
-      return `${companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
-    }
-  };
-
-  const generateEmailPatterns = (firstName, lastName, domain) => {
-    const f = firstName.toLowerCase();
-    const l = lastName.toLowerCase();
-    
-    return [
-      `${f}.${l}@${domain}`,
-      `${f}@${domain}`,
-      `${f[0]}.${l}@${domain}`,
-      `${f}${l}@${domain}`,
-      `${f}_${l}@${domain}`,
-      `${f}+${l}@${domain}`,
-      `${l}.${f}@${domain}`,
-      `${f[0]}${l}@${domain}`
-    ];
-  };
-
-  const verifyEmailByPattern = async (email, firstName, lastName, domain) => {
-    try {
-      // Score email patterns based on common company conventions
-      const f = firstName.toLowerCase();
-      const l = lastName.toLowerCase();
-      
-      // Common email patterns with their typical usage scores
-      const patterns = {
-        [`${f}.${l}@${domain}`]: 85,      // Most common: john.smith@company.com
-        [`${f}@${domain}`]: 60,           // First name only: john@company.com  
-        [`${f[0]}.${l}@${domain}`]: 75,   // Initial + last: j.smith@company.com
-        [`${f}${l}@${domain}`]: 70,       // No separator: johnsmith@company.com
-        [`${f}_${l}@${domain}`]: 65,      // Underscore: john_smith@company.com
-        [`${f[0]}${l}@${domain}`]: 60,    // Initial + last: jsmith@company.com
-        [`${l}.${f}@${domain}`]: 45,      // Reverse: smith.john@company.com
-        [`${f}+${l}@${domain}`]: 30       // Plus separator: john+smith@company.com (less common)
-      };
-      
-      // Get base score for this pattern
-      let score = patterns[email] || 40;
-      
-      // Boost score based on domain characteristics
-      if (domain.includes('.com')) score += 10;
-      if (domain.split('.').length === 2) score += 5; // Simple domain structure
-      
-      // Boost score for common enterprise domains
-      const enterpriseDomains = ['microsoft.com', 'google.com', 'apple.com', 'amazon.com', 'meta.com', 'netflix.com', 'uber.com', 'airbnb.com', 'stripe.com', 'salesforce.com'];
-      if (enterpriseDomains.some(ed => domain.toLowerCase().includes(ed.split('.')[0]))) {
-        score += 15;
-      }
-      
-      // Basic email format validation
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      if (!emailRegex.test(email)) {
-        score = Math.max(0, score - 30);
-      }
-      
-      // Length penalties for very long emails
-      if (email.length > 35) score -= 10;
-      if (email.length > 45) score -= 20;
-      
-      // Cap the score at 95 to indicate it's pattern-based, not verified
-      score = Math.min(95, Math.max(0, score));
-      
-      return {
-        isValid: score > 50,
-        score: score,
-        provider: 'Pattern Analysis',
-        pattern: email.split('@')[0],
-        confidence: score > 80 ? 'High' : score > 60 ? 'Medium' : 'Low'
-      };
-      
-    } catch (error) {
-      addLog(`Email pattern analysis failed for ${email}: ${error.message}`, 'error');
-      return { isValid: false, score: 30, provider: 'Pattern Error', confidence: 'Low' };
-    }
   };
 
   const enrichProfileData = async (profiles) => {
@@ -522,13 +283,11 @@ Return ONLY a JSON array with this structure:
         responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         const aiEnrichments = JSON.parse(responseText);
         
-        // Merge AI enri hellooooo testing chments with original profile data, preserving important fields like linkedinUrl
         enrichedProfiles = profiles.map(profile => {
           const aiData = aiEnrichments.find(ai => ai.name === profile.name) || {};
           return {
-            ...profile, // Preserve all original data including linkedinUrl
-            ...aiData,  // Add AI enrichments
-            // Ensure we don't lose critical original fields
+            ...profile,
+            ...aiData,
             linkedinUrl: profile.linkedinUrl,
             source: profile.source
           };
@@ -539,7 +298,7 @@ Return ONLY a JSON array with this structure:
         addLog('AI response parsing failed, using basic categorization', 'error');
         enrichedProfiles = profiles.map(p => ({
           ...p,
-          connectionType: 'Industry Contact',
+          connectionType: p.isPriorityConnection ? p.priorityReason.includes('Alumni') ? 'School Alumni' : 'Work Alumni' : 'Industry Contact',
           department: 'Unknown',
           seniority: 'Mid',
           responseRate: 6,
@@ -555,9 +314,87 @@ Return ONLY a JSON array with this structure:
     }
   };
 
+  const generateEmailPatterns = (firstName, lastName, domain) => {
+    const first = firstName.toLowerCase();
+    const last = lastName.toLowerCase();
+    const firstInitial = first.charAt(0);
+    const lastInitial = last.charAt(0);
+    
+    return [
+      `${first}.${last}@${domain}`,
+      `${first}${last}@${domain}`,
+      `${firstInitial}${last}@${domain}`,
+      `${first}${lastInitial}@${domain}`,
+      `${firstInitial}.${last}@${domain}`,
+      `${last}.${first}@${domain}`,
+      `${last}${first}@${domain}`,
+      `${first}_${last}@${domain}`,
+      `${first}-${last}@${domain}`,
+      `${firstInitial}${lastInitial}@${domain}`
+    ];
+  };
+
+  const getCompanyDomain = async (companyName) => {
+    const domainMappings = {
+      'google': 'google.com',
+      'microsoft': 'microsoft.com',
+      'apple': 'apple.com',
+      'amazon': 'amazon.com',
+      'meta': 'meta.com',
+      'netflix': 'netflix.com',
+      'uber': 'uber.com',
+      'airbnb': 'airbnb.com',
+      'stripe': 'stripe.com',
+      'salesforce': 'salesforce.com'
+    };
+    
+    const normalizedName = companyName.toLowerCase();
+    return domainMappings[normalizedName] || `${normalizedName.replace(/\s+/g, '')}.com`;
+  };
+
+  const verifyEmailByPattern = async (email, firstName, lastName, domain) => {
+    try {
+      let score = 70;
+      
+      if (email.includes(firstName.toLowerCase()) && email.includes(lastName.toLowerCase())) {
+        score += 10;
+      }
+      
+      if (email.includes('.')) score += 5;
+      if (email.includes('_') || email.includes('-')) score -= 5;
+      
+      const enterpriseDomains = ['microsoft.com', 'google.com', 'apple.com', 'amazon.com', 'meta.com', 'netflix.com', 'uber.com', 'airbnb.com', 'stripe.com', 'salesforce.com'];
+      if (enterpriseDomains.some(ed => domain.toLowerCase().includes(ed.split('.')[0]))) {
+        score += 15;
+      }
+      
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(email)) {
+        score = Math.max(0, score - 30);
+      }
+      
+      if (email.length > 35) score -= 10;
+      if (email.length > 45) score -= 20;
+      
+      score = Math.min(95, Math.max(0, score));
+      
+      return {
+        isValid: score > 50,
+        score: score,
+        provider: 'Pattern Analysis',
+        pattern: email.split('@')[0],
+        confidence: score > 80 ? 'High' : score > 60 ? 'Medium' : 'Low'
+      };
+      
+    } catch (error) {
+      addLog(`Email pattern analysis failed for ${email}: ${error.message}`, 'error');
+      return { isValid: false, score: 30, provider: 'Pattern Error', confidence: 'Low' };
+    }
+  };
+
   const discoverConnections = async () => {
     if (!apiKeys.openai || !apiKeys.googleSearch || !apiKeys.googleCSE) {
-      alert('Missing API keys! Please enter your OpenAI API Key, Google Search API Key, and Google CSE ID in the API Configuration section above.');
+      alert('Missing API keys! Please check your environment variables.');
       return;
     }
 
@@ -567,14 +404,12 @@ Return ONLY a JSON array with this structure:
     setExtractionLog([]);
 
     try {
-      addLog('Starting real LinkedIn profile discovery via Google Search...', 'info');
-      addLog('Waiting 3 seconds to avoid rate limits...', 'info');
+      addLog('Starting LinkedIn profile discovery...', 'info');
+      addLog('Waiting to avoid rate limits...', 'info');
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // PRIORITY: Search for school alumni and former colleagues FIRST
       const priorityProfiles = await searchPriorityConnections(formData.targetCompany, formData.school, formData.previousCompany);
       
-      // Skip other searches for now to focus on priority connections and conserve API quota
       addLog('Skipping additional searches to conserve API quota - focusing on priority connections only', 'info');
       const linkedinProfiles = [];
       const additionalProfiles = [];
@@ -585,15 +420,14 @@ Return ONLY a JSON array with this structure:
       );
       
       if (uniqueProfiles.length === 0) {
-        addLog('No real LinkedIn profiles found. Try a larger company or check your Google Search API setup.', 'error');
+        addLog('No LinkedIn profiles found. Try a larger company or check your API setup.', 'error');
         return;
       }
 
-      addLog(`Found ${uniqueProfiles.length} real LinkedIn profiles, enriching with AI...`, 'success');
+      addLog(`Found ${uniqueProfiles.length} LinkedIn profiles, enriching with AI...`, 'success');
       
       const enrichedProfiles = await enrichProfileData(uniqueProfiles);
       
-      // Debug: Log connection type breakdown
       const connectionTypes = {};
       enrichedProfiles.forEach(profile => {
         const type = profile.connectionType || 'Unknown';
@@ -626,7 +460,6 @@ Return ONLY a JSON array with this structure:
             bestScore = verification.score;
           }
           
-          // Much shorter delay since we're not hitting external APIs
           await new Promise(resolve => setTimeout(resolve, 200));
         }
         
@@ -641,7 +474,7 @@ Return ONLY a JSON array with this structure:
       }
       
       setConnections(finalConnections);
-      addLog(`Discovery complete! Found ${finalConnections.length} REAL LinkedIn connections with pattern-analyzed emails.`, 'success');
+      addLog(`Discovery complete! Found ${finalConnections.length} connections with analyzed emails.`, 'success');
       
     } catch (error) {
       addLog(`Critical error: ${error.message}`, 'error');
@@ -653,235 +486,188 @@ Return ONLY a JSON array with this structure:
 
   const getConnectionTypeColor = (type) => {
     switch (type) {
-      case 'Alumni': 
-        return 'bg-blue-100 text-blue-800';
-      case 'Former Colleague': 
-        return 'bg-green-100 text-green-800';
-      case 'Industry Contact': 
-        return 'bg-purple-100 text-purple-800';
-      case 'Direct Contact': 
-        return 'bg-orange-100 text-orange-800';
-      default: 
-        return 'bg-gray-100 text-gray-800';
+      case 'School Alumni': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Work Alumni': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Industry Contact': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'Direct Contact': return 'bg-purple-100 text-purple-800 border-purple-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getLogTypeColor = (type) => {
+    switch (type) {
+      case 'success': return 'text-green-600';
+      case 'error': return 'text-red-600';
+      case 'warning': return 'text-yellow-600';
+      default: return 'text-gray-600';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Real LinkedIn Connection Finder</h1>
-          <p className="text-lg text-gray-600">Google Search API finds real LinkedIn profiles with verified emails</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-6">
+            <h1 className="text-3xl font-bold text-gray-900">Connection Finder</h1>
+            <p className="mt-2 text-gray-600">Find LinkedIn connections using Google Search API with verified emails</p>
+          </div>
         </div>
+      </div>
 
-        {/* API Keys Section */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">API Configuration</h2>
-            <div className="text-sm text-green-600 font-medium">
-              Status: {apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? 'All Configured' : 'Missing Keys'}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Form */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Building2 className="w-4 h-4 inline mr-2" />
+                Target Company
+              </label>
+              <input
+                type="text"
+                value={formData.targetCompany}
+                onChange={(e) => setFormData({...formData, targetCompany: e.target.value})}
+                placeholder="e.g., Apple, Google, Microsoft"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Building2 className="w-4 h-4 inline mr-2" />
+                Your Old Company
+              </label>
+              <input
+                type="text"
+                value={formData.previousCompany}
+                onChange={(e) => setFormData({...formData, previousCompany: e.target.value})}
+                placeholder="e.g., Microsoft, Amazon, Meta"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <GraduationCap className="w-4 h-4 inline mr-2" />
+                School/University
+              </label>
+              <input
+                type="text"
+                value={formData.school}
+                onChange={(e) => setFormData({...formData, school: e.target.value})}
+                placeholder="e.g., Stanford, MIT, Harvard"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <User className="w-4 h-4 inline mr-2" />
+                Your Name
+              </label>
+              <input
+                type="text"
+                value={formData.yourName}
+                onChange={(e) => setFormData({...formData, yourName: e.target.value})}
+                placeholder="Your full name"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           </div>
-          
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  OpenAI API Key *
-                </label>
-                <input
-                  type="password"
-                  value={apiKeys.openai}
-                  onChange={(e) => setApiKeys({...apiKeys, openai: e.target.value})}
-                  placeholder="sk-..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Google Search API Key *
-                </label>
-                <input
-                  type="password"
-                  value={apiKeys.googleSearch}
-                  onChange={(e) => setApiKeys({...apiKeys, googleSearch: e.target.value})}
-                  placeholder="AIza..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Google Custom Search Engine ID *
-                </label>
-                <input
-                  type="password"
-                  value={apiKeys.googleCSE}
-                  onChange={(e) => setApiKeys({...apiKeys, googleCSE: e.target.value})}
-                  placeholder="Your CSE ID..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            
-            <div className={`border rounded-md p-4 ${process.env.NODE_ENV === 'development' ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
-              <p className={`text-sm ${process.env.NODE_ENV === 'development' ? 'text-green-800' : 'text-blue-800'}`}>
-                {process.env.NODE_ENV === 'development' ? (
-                  <>
-                    <strong>🔧 Development Mode:</strong> API keys are loaded from your .env file automatically.
-                  </>
+
+          {/* API Status */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                {apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? (
+                  <Check className="w-5 h-5 text-green-500 mr-2" />
                 ) : (
-                  <>
-                    <strong>🔒 Production Mode:</strong> Enter your API keys below. They are stored locally in your browser and never sent to our servers. 
-                    Get your keys from: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline">OpenAI</a> | 
-                    <a href="https://developers.google.com/custom-search/v1/introduction" target="_blank" rel="noopener noreferrer" className="underline ml-1">Google Custom Search</a>
-                  </>
+                  <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
                 )}
-              </p>
+                <span className="text-sm font-medium text-gray-700">API Configuration</span>
+              </div>
+              <span className={`text-sm font-medium ${apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? 'text-green-600' : 'text-red-600'}`}>
+                {apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? 'All Configured' : 'Missing Keys'}
+              </span>
             </div>
           </div>
+
+          {/* Search Button */}
+          <button
+            onClick={discoverConnections}
+            disabled={loading || !formData.targetCompany}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-4 px-6 rounded-lg transition-colors flex items-center justify-center"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Finding Connections...
+              </>
+            ) : (
+              <>
+                <Search className="w-5 h-5 mr-2" />
+                Find Priority Connections
+              </>
+            )}
+          </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Target Information</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Building className="inline w-4 h-4 mr-1" />
-                  Target Company *
-                </label>
-                <input
-                  type="text"
-                  value={formData.targetCompany}
-                  onChange={(e) => setFormData({...formData, targetCompany: e.target.value})}
-                  placeholder="e.g., Microsoft, Stripe, Airbnb"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Building className="inline w-4 h-4 mr-1" />
-                  Previous Company *
-                </label>
-                <input
-                  type="text"
-                  value={formData.previousCompany}
-                  onChange={(e) => setFormData({...formData, previousCompany: e.target.value})}
-                  placeholder="e.g., Google, Meta, Apple"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <GraduationCap className="inline w-4 h-4 mr-1" />
-                  School/University *
-                </label>
-                <input
-                  type="text"
-                  value={formData.school}
-                  onChange={(e) => setFormData({...formData, school: e.target.value})}
-                  placeholder="e.g., Stanford, MIT, Carnegie Mellon"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.yourName}
-                  onChange={(e) => setFormData({...formData, yourName: e.target.value})}
-                  placeholder="e.g., Alex Chen"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            
-            <button
-              onClick={discoverConnections}
-              disabled={loading || !formData.targetCompany || !formData.previousCompany || !formData.school || !formData.yourName}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="animate-spin w-4 h-4 mr-2" />
-                  Finding Real LinkedIn Profiles...
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4 mr-2" />
-                  Find Priority Connections + LinkedIn Profiles
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
+        {/* Search Logs */}
         {extractionLog.length > 0 && (
-          <div className="bg-black text-green-400 font-mono text-sm p-4 rounded-lg mb-8 max-h-48 overflow-y-auto">
-            {extractionLog.map((log, index) => (
-              <div key={index} className="flex items-center mb-1">
-                <span className="text-gray-500 mr-2">[{log.timestamp}]</span>
-                {log.type === 'success' && <CheckCircle className="w-4 h-4 mr-2 text-green-400" />}
-                {log.type === 'error' && <AlertCircle className="w-4 h-4 mr-2 text-red-400" />}
-                <span className={log.type === 'error' ? 'text-red-400' : 'text-green-400'}>
-                  {log.message}
-                </span>
-              </div>
-            ))}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Search Progress</h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {extractionLog.map((log, index) => (
+                <div key={index} className="flex items-start text-sm">
+                  <span className="text-gray-400 mr-3 font-mono">{log.timestamp}</span>
+                  <span className={getLogTypeColor(log.type)}>{log.message}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
+        {/* Results */}
         {searchComplete && connections.length > 0 && (
           <div className="space-y-8">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Found {connections.length} Real LinkedIn Connections</h2>
-              <p className="text-gray-600">Priority connections shown first, followed by additional profiles</p>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900">Found {connections.length} LinkedIn Connections</h2>
+              <p className="text-gray-600 mt-2">Priority connections shown with verified email patterns</p>
             </div>
 
-            {/* Priority Connections Section */}
+            {/* Priority Connections */}
             {connections.filter(c => c.isPriorityConnection).length > 0 && (
-              <div className="mb-8">
-                <div className="text-center mb-6 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg text-white">
-                  <h3 className="text-xl font-bold flex items-center justify-center">
-                    PRIORITY CONNECTIONS ({connections.filter(c => c.isPriorityConnection).length})
+              <div>
+                <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
+                  <h3 className="text-lg font-semibold text-blue-900 text-center">
+                    Priority Connections ({connections.filter(c => c.isPriorityConnection).length})
                   </h3>
-                  <p className="font-medium">School Alumni & Former Colleagues at {formData.targetCompany}</p>
+                  <p className="text-blue-700 text-center text-sm">School Alumni & Former Colleagues at {formData.targetCompany}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {connections.filter(connection => connection.isPriorityConnection).map((connection, index) => (
-                    <div key={`priority-${index}`} className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-blue-200">
+                    <div key={`priority-${index}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                           <div className="flex items-center mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">{connection.name}</h3>
-                            <span className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded-full font-medium">
+                            <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium border border-blue-200">
                               PRIORITY
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600">{connection.title}</p>
-                          <p className="text-sm text-gray-500">{connection.department}</p>
-                          <p className="text-xs font-medium text-blue-600 mt-1">PRIORITY: {connection.priorityReason}</p>
-                          <p className="text-xs text-gray-400 mt-1">Source: {connection.source}</p>
+                          <p className="text-sm text-gray-600 mb-1">{connection.title}</p>
+                          <p className="text-sm text-gray-500 mb-1">{connection.department}</p>
+                          <p className="text-xs font-medium text-blue-600">PRIORITY: {connection.priorityReason}</p>
                         </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConnectionTypeColor(connection.connectionType)}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getConnectionTypeColor(connection.connectionType)}`}>
                           {connection.connectionType}
                         </span>
                       </div>
 
-                      <div className="space-y-2 mb-4">
+                      <div className="space-y-3 mb-4">
                         <div className="flex items-center text-sm text-gray-600">
-                          <Building className="w-4 h-4 mr-2" />
                           {connection.seniority} • {connection.responseRate}/10 response rate
                         </div>
                       </div>
@@ -897,38 +683,27 @@ Return ONLY a JSON array with this structure:
                           </div>
                         </div>
 
-                        <details className="mb-3">
-                          <summary className="text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
-                            Alternative Patterns ({(connection.allEmailPatterns || []).length - 1})
-                          </summary>
-                          <div className="mt-2 space-y-1">
-                            {(connection.allEmailPatterns || []).slice(1).map((email, i) => (
-                              <div key={i} className="text-sm font-mono text-gray-600">{email}</div>
-                            ))}
-                          </div>
-                        </details>
-
                         {connection.outreachTips && (
-                          <div className="mb-3 p-3 bg-blue-100 rounded text-xs text-blue-800 border border-blue-200">
+                          <div className="mb-3 p-3 bg-blue-50 rounded text-xs text-blue-800 border border-blue-200">
                             <strong>Priority Outreach Tip:</strong> {connection.outreachTips}
                           </div>
                         )}
 
                         <div className="flex space-x-2">
                           <a
-                            href={connection.linkedinUrl || `https://linkedin.com/in/${connection.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+                            href={connection.linkedinUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 bg-blue-600 text-white text-xs py-2 px-3 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+                            className="flex-1 bg-blue-600 text-white text-center py-2 px-3 rounded text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
                           >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            LinkedIn Profile
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            LinkedIn
                           </a>
                           <a
-                            href={`mailto:${connection.primaryEmail}?subject=Connection from ${formData.yourName}&body=Hi ${connection.name.split(' ')[0]}, I'm applying to ${formData.targetCompany} and noticed we share a connection through ${connection.priorityReason.includes('Alumni') ? formData.school : formData.previousCompany}. Would love to connect!`}
-                            className="flex-1 bg-green-600 text-white text-xs py-2 px-3 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
+                            href={`mailto:${connection.primaryEmail}?subject=Connection from ${formData.yourName}&body=Hi ${connection.name.split(' ')[0]}, I hope this email finds you well. I'm reaching out because we share a connection...`}
+                            className="flex-1 bg-gray-600 text-white text-center py-2 px-3 rounded text-sm font-medium hover:bg-gray-700 transition-colors flex items-center justify-center"
                           >
-                            <Mail className="w-3 h-3 mr-1" />
+                            <Mail className="w-4 h-4 mr-1" />
                             Email
                           </a>
                         </div>
@@ -939,7 +714,7 @@ Return ONLY a JSON array with this structure:
               </div>
             )}
 
-            {/* Regular Connections Section */}
+            {/* Regular Connections */}
             {connections.filter(c => !c.isPriorityConnection).length > 0 && (
               <div>
                 <div className="text-center mb-6">
@@ -951,22 +726,20 @@ Return ONLY a JSON array with this structure:
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {connections.filter(connection => !connection.isPriorityConnection).map((connection, index) => (
-                    <div key={`regular-${index}`} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                    <div key={`regular-${index}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900">{connection.name}</h3>
                           <p className="text-sm text-gray-600">{connection.title}</p>
                           <p className="text-sm text-gray-500">{connection.department}</p>
-                          <p className="text-xs text-gray-400 mt-1">Source: {connection.source}</p>
                         </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConnectionTypeColor(connection.connectionType)}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getConnectionTypeColor(connection.connectionType)}`}>
                           {connection.connectionType}
                         </span>
                       </div>
 
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center text-sm text-gray-600">
-                          <Building className="w-4 h-4 mr-2" />
                           {connection.seniority} • {connection.responseRate}/10 response rate
                         </div>
                       </div>
@@ -982,38 +755,21 @@ Return ONLY a JSON array with this structure:
                           </div>
                         </div>
 
-                        <details className="mb-3">
-                          <summary className="text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer">
-                            Alternative Patterns ({(connection.allEmailPatterns || []).length - 1})
-                          </summary>
-                          <div className="mt-2 space-y-1">
-                            {(connection.allEmailPatterns || []).slice(1).map((email, i) => (
-                              <div key={i} className="text-sm font-mono text-gray-600">{email}</div>
-                            ))}
-                          </div>
-                        </details>
-
-                        {connection.outreachTips && (
-                          <div className="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                            <strong>Tip:</strong> {connection.outreachTips}
-                          </div>
-                        )}
-
                         <div className="flex space-x-2">
                           <a
-                            href={connection.linkedinUrl || `https://linkedin.com/in/${connection.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+                            href={connection.linkedinUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 bg-blue-50 text-blue-700 text-xs py-2 px-3 rounded-md hover:bg-blue-100 transition-colors flex items-center justify-center"
+                            className="flex-1 bg-blue-600 text-white text-center py-2 px-3 rounded text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
                           >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            LinkedIn Profile
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            LinkedIn
                           </a>
                           <a
-                            href={`mailto:${connection.primaryEmail}?subject=Connection from ${formData.yourName}&body=Hi ${connection.name.split(' ')[0]}, I'm applying to ${formData.targetCompany} and noticed we share connections through ${connection.connectionType === 'Alumni' ? formData.school : formData.previousCompany}. Would love to connect!`}
-                            className="flex-1 bg-green-50 text-green-700 text-xs py-2 px-3 rounded-md hover:bg-green-100 transition-colors flex items-center justify-center"
+                            href={`mailto:${connection.primaryEmail}?subject=Connection from ${formData.yourName}&body=Hi ${connection.name.split(' ')[0]}, I hope this email finds you well. I'm reaching out because...`}
+                            className="flex-1 bg-gray-600 text-white text-center py-2 px-3 rounded text-sm font-medium hover:bg-gray-700 transition-colors flex items-center justify-center"
                           >
-                            <Mail className="w-3 h-3 mr-1" />
+                            <Mail className="w-4 h-4 mr-1" />
                             Email
                           </a>
                         </div>
@@ -1028,9 +784,11 @@ Return ONLY a JSON array with this structure:
 
         {searchComplete && connections.length === 0 && (
           <div className="text-center py-12">
-            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Connections Found</h3>
-            <p className="text-gray-600">Try a different company name or check the extraction log for details.</p>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Connections Found</h3>
+              <p className="text-gray-600">Try a larger company or check your API configuration.</p>
+            </div>
           </div>
         )}
       </div>
