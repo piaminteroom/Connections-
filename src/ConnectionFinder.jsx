@@ -87,12 +87,17 @@ const ConnectionFinder = () => {
       addLog(`Priority search: ${searchQuery.substring(0, 70)}...`, 'info');
       
       try {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Longer delay for priority searches
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Longer delay for priority searches
         
         const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=8`);
         
         if (!response.ok) {
-          addLog(`Priority search API error: ${response.status}`, 'error');
+          if (response.status === 429) {
+            addLog(`Rate limit hit, waiting longer before next search...`, 'warning');
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          } else {
+            addLog(`Priority search API error: ${response.status}`, 'error');
+          }
           continue;
         }
         
@@ -138,7 +143,7 @@ const ConnectionFinder = () => {
       addLog(`Searching: ${searchQuery.substring(0, 80)}...`, 'info');
       
       try {
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 2500)); // Rate limiting
         
         const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=10`);
         
@@ -284,7 +289,7 @@ const ConnectionFinder = () => {
         addLog(`Additional search: ${searchQuery.substring(0, 60)}...`, 'info');
         
         try {
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 3500));
           
           const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=8`);
           
