@@ -2,7 +2,6 @@
   "name": "connection-finder",
   "version": "1.0.0",
   "description": "Real-time connection finder with web scraping and email verification",
-
   "main": "index.js",
   "scripts": {
     "start": "react-scripts start",
@@ -40,6 +39,9 @@
   "devDependencies": {
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
-    "gh-pages": "^6.3.0"
+    "autoprefixer": "^10.4.21",
+    "gh-pages": "^6.3.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
   }
 }
