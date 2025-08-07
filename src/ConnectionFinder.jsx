@@ -77,7 +77,7 @@ const ConnectionFinder = () => {
 
   // Priority search for school alumni and former colleagues
   const searchPriorityConnections = async (companyName, school, previousCompany) => {
-    addLog(`🎯 PRIORITY SEARCH: Looking for ${school} alumni and ${previousCompany} colleagues at ${companyName}...`, 'info');
+    addLog(`PRIORITY SEARCH: Looking for ${school} alumni and ${previousCompany} colleagues at ${companyName}...`, 'info');
     
     const prioritySearches = generatePriorityConnectionSearches(companyName, school, previousCompany);
     const priorityProfiles = [];
@@ -110,7 +110,7 @@ const ConnectionFinder = () => {
           
           const isSchoolSearch = school && searchQuery.includes(school);
           const connectionType = isSchoolSearch ? 'school alumni' : 'work alumni';
-          addLog(`🎯 Found ${profiles.length} ${connectionType} from search: ${searchQuery.substring(0, 50)}...`, 'success');
+          addLog(`Found ${profiles.length} ${connectionType} from search: ${searchQuery.substring(0, 50)}...`, 'success');
         }
         
       } catch (error) {
@@ -122,7 +122,7 @@ const ConnectionFinder = () => {
     // Summary of what we found
     const schoolAlumni = priorityProfiles.filter(p => p.priorityReason && p.priorityReason.includes('Alumni')).length;
     const workAlumni = priorityProfiles.filter(p => p.priorityReason && p.priorityReason.includes('Colleague')).length;
-    addLog(`🎯 PRIORITY SUMMARY: ${schoolAlumni} school alumni, ${workAlumni} work alumni (${priorityProfiles.length} total)`, 'info');
+    addLog(`PRIORITY SUMMARY: ${schoolAlumni} school alumni, ${workAlumni} work alumni (${priorityProfiles.length} total)`, 'info');
     
     return priorityProfiles;
   };
@@ -593,7 +593,7 @@ Return ONLY a JSON array with this structure:
         const type = profile.connectionType || 'Unknown';
         connectionTypes[type] = (connectionTypes[type] || 0) + 1;
       });
-      addLog(`📊 CONNECTION TYPES: ${Object.entries(connectionTypes).map(([type, count]) => `${type}: ${count}`).join(', ')}`, 'info');
+      addLog(`CONNECTION TYPES: ${Object.entries(connectionTypes).map(([type, count]) => `${type}: ${count}`).join(', ')}`, 'info');
       
       const domain = await getCompanyDomain(formData.targetCompany);
       addLog(`Generating email patterns for domain: ${domain}`, 'info');
@@ -671,9 +671,9 @@ Return ONLY a JSON array with this structure:
         {/* API Keys Section */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">🔑 API Configuration</h2>
+            <h2 className="text-xl font-semibold">API Configuration</h2>
             <div className="text-sm text-green-600 font-medium">
-              Status: {apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? '✅ All Configured' : '❌ Missing Keys'}
+              Status: {apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? 'All Configured' : 'Missing Keys'}
             </div>
           </div>
           
@@ -813,7 +813,7 @@ Return ONLY a JSON array with this structure:
               ) : (
                 <>
                   <Search className="w-4 h-4 mr-2" />
-                  🎯 Find Priority Connections + LinkedIn Profiles
+                  Find Priority Connections + LinkedIn Profiles
                 </>
               )}
             </button>
@@ -847,7 +847,7 @@ Return ONLY a JSON array with this structure:
               <div className="mb-8">
                 <div className="text-center mb-6 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg text-white">
                   <h3 className="text-xl font-bold flex items-center justify-center">
-                    🎯 PRIORITY CONNECTIONS ({connections.filter(c => c.isPriorityConnection).length})
+                    PRIORITY CONNECTIONS ({connections.filter(c => c.isPriorityConnection).length})
                   </h3>
                   <p className="font-medium">School Alumni & Former Colleagues at {formData.targetCompany}</p>
                 </div>
@@ -865,7 +865,7 @@ Return ONLY a JSON array with this structure:
                           </div>
                           <p className="text-sm text-gray-600">{connection.title}</p>
                           <p className="text-sm text-gray-500">{connection.department}</p>
-                          <p className="text-xs font-medium text-blue-600 mt-1">🎯 {connection.priorityReason}</p>
+                          <p className="text-xs font-medium text-blue-600 mt-1">PRIORITY: {connection.priorityReason}</p>
                           <p className="text-xs text-gray-400 mt-1">Source: {connection.source}</p>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConnectionTypeColor(connection.connectionType)}`}>
@@ -904,7 +904,7 @@ Return ONLY a JSON array with this structure:
 
                         {connection.outreachTips && (
                           <div className="mb-3 p-3 bg-blue-100 rounded text-xs text-blue-800 border border-blue-200">
-                            <strong>🎯 Priority Outreach Tip:</strong> {connection.outreachTips}
+                            <strong>Priority Outreach Tip:</strong> {connection.outreachTips}
                           </div>
                         )}
 

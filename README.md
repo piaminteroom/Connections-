@@ -65,11 +65,11 @@ A React application that helps you find potential connections at target companie
 
 ## What This Tool Does
 
-✅ **Real LinkedIn Discovery**: Uses Google search to find actual LinkedIn profiles
-✅ **No Expensive Proxies**: Bypasses expensive scraping services  
-✅ **Smart Email Pattern Analysis**: Uses intelligent algorithms to find most likely email formats
-✅ **AI-Powered Analysis**: Categorizes connections and provides outreach tips
-✅ **Cost Effective**: Much cheaper than traditional scraping methods
+- **Real LinkedIn Discovery**: Uses Google search to find actual LinkedIn profiles
+- **No Expensive Proxies**: Bypasses expensive scraping services
+- **Smart Email Pattern Analysis**: Uses intelligent algorithms to find most likely email formats
+- **AI-Powered Analysis**: Categorizes connections and provides outreach tips
+- **Cost Effective**: Much cheaper than traditional scraping methods
 
 ## Security
 
