@@ -63,9 +63,14 @@ const ConnectionFinder = () => {
     // Former Colleague searches - people from your previous company now at target company  
     if (previousCompany) {
       prioritySearches.push(
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (former OR previous OR ex)`,
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (worked OR experience OR alumni)`,
-        `site:linkedin.com/in/ "${companyName}" "formerly ${previousCompany}" OR "ex-${previousCompany}"`
+        // More inclusive searches that catch people who worked at previous company
+        `site:linkedin.com/in/ "${companyName}" "${previousCompany}"`,
+        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (former OR previous OR ex OR worked)`,
+        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (experience OR alumni OR team)`,
+        `site:linkedin.com/in/ "${companyName}" "formerly ${previousCompany}" OR "ex-${previousCompany}"`,
+        // Additional patterns for work history
+        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (years OR time OR tenure)`,
+        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" -school -university -college`
       );
     }
     
@@ -416,10 +421,15 @@ const ConnectionFinder = () => {
 Profiles: ${JSON.stringify(profiles)}
 
 For each profile, determine:
-1. Connection type: "Alumni", "Former Colleague", "Industry Contact", or "Direct Contact"
+1. Connection type: "School Alumni" (if they went to ${formData.school}), "Work Alumni" (if they worked at ${formData.previousCompany}), "Industry Contact", or "Direct Contact"
 2. Department classification
 3. Seniority level
 4. Likelihood they would respond to networking (1-10)
+
+IMPORTANT: 
+- If someone mentions ${formData.school} in their profile, they are "School Alumni"
+- If someone mentions ${formData.previousCompany} in their work history, they are "Work Alumni"
+- Prioritize finding both School Alumni AND Work Alumni connections
 
 Return ONLY a JSON array with this structure:
 [
@@ -427,7 +437,7 @@ Return ONLY a JSON array with this structure:
     "name": "exact name from input",
     "title": "exact title from input", 
     "company": "exact company from input",
-    "connectionType": "one of the four types above",
+    "connectionType": "School Alumni, Work Alumni, Industry Contact, or Direct Contact",
     "department": "standardized department name",
     "seniority": "Junior/Mid/Senior/Executive",
     "responseRate": number 1-10,
@@ -444,7 +454,7 @@ Return ONLY a JSON array with this structure:
         addLog(`OpenAI API error during enrichment (${response.status}): ${errorText}`, 'error');
         return profiles.map(p => ({
           ...p,
-          connectionType: 'Industry Contact',
+          connectionType: p.isPriorityConnection ? p.priorityReason.includes('Alumni') ? 'School Alumni' : 'Work Alumni' : 'Industry Contact',
           department: 'Unknown',
           seniority: 'Mid',
           responseRate: 6,
@@ -458,7 +468,7 @@ Return ONLY a JSON array with this structure:
         addLog(`OpenAI enrichment returned unexpected format: ${JSON.stringify(data)}`, 'error');
         return profiles.map(p => ({
           ...p,
-          connectionType: 'Industry Contact',
+          connectionType: p.isPriorityConnection ? p.priorityReason.includes('Alumni') ? 'School Alumni' : 'Work Alumni' : 'Industry Contact',
           department: 'Unknown',
           seniority: 'Mid',
           responseRate: 6,
