@@ -54,21 +54,18 @@ const ConnectionFinder = () => {
     // School Alumni searches - people from your school now at target company
     if (school) {
       prioritySearches.push(
+        // Reduced to just 2 most effective searches to conserve API quota
         `site:linkedin.com/in/ "${companyName}" "${school}" (alumni OR graduated OR studied)`,
-        `site:linkedin.com/in/ "${companyName}" "${school}" (university OR college OR school)`,
-        `site:linkedin.com/in/ "${companyName}" "${school}" (bachelor OR master OR degree OR PhD)`
+        `site:linkedin.com/in/ "${companyName}" "${school}" (university OR college OR school)`
       );
     }
     
     // Former Colleague searches - people from your previous company now at target company  
     if (previousCompany) {
       prioritySearches.push(
-        // Simpler, more effective searches
+        // Reduced to just 2 most effective searches to conserve API quota
         `site:linkedin.com/in/ "${companyName}" "${previousCompany}"`,
-        `site:linkedin.com/in/ "${companyName}" "former ${previousCompany}"`,
-        `site:linkedin.com/in/ "${companyName}" "previously ${previousCompany}"`,
-        `site:linkedin.com/in/ "${companyName}" "ex-${previousCompany}"`,
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" -school -university -college`
+        `site:linkedin.com/in/ "${companyName}" "former ${previousCompany}"`
       );
     }
     
@@ -577,8 +574,10 @@ Return ONLY a JSON array with this structure:
       // PRIORITY: Search for school alumni and former colleagues FIRST
       const priorityProfiles = await searchPriorityConnections(formData.targetCompany, formData.school, formData.previousCompany);
       
-      const linkedinProfiles = await searchGoogleForLinkedInProfiles(formData.targetCompany);
-      const additionalProfiles = await searchAdditionalLinkedInProfiles(formData.targetCompany);
+      // Skip other searches for now to focus on priority connections and conserve API quota
+      addLog('Skipping additional searches to conserve API quota - focusing on priority connections only', 'info');
+      const linkedinProfiles = [];
+      const additionalProfiles = [];
       
       const allProfiles = [...priorityProfiles, ...linkedinProfiles, ...additionalProfiles];
       const uniqueProfiles = allProfiles.filter((profile, index, self) => 
