@@ -108,7 +108,8 @@ const ConnectionFinder = () => {
           }));
           priorityProfiles.push(...priorityMarkedProfiles);
           
-          const connectionType = searchQuery.includes(school) ? 'school alumni' : 'work alumni';
+          const isSchoolSearch = school && searchQuery.includes(school);
+          const connectionType = isSchoolSearch ? 'school alumni' : 'work alumni';
           addLog(`🎯 Found ${profiles.length} ${connectionType} from search: ${searchQuery.substring(0, 50)}...`, 'success');
         }
         
@@ -117,6 +118,11 @@ const ConnectionFinder = () => {
         continue;
       }
     }
+    
+    // Summary of what we found
+    const schoolAlumni = priorityProfiles.filter(p => p.priorityReason && p.priorityReason.includes('Alumni')).length;
+    const workAlumni = priorityProfiles.filter(p => p.priorityReason && p.priorityReason.includes('Colleague')).length;
+    addLog(`🎯 PRIORITY SUMMARY: ${schoolAlumni} school alumni, ${workAlumni} work alumni (${priorityProfiles.length} total)`, 'info');
     
     return priorityProfiles;
   };
@@ -580,6 +586,15 @@ Return ONLY a JSON array with this structure:
       addLog(`Found ${uniqueProfiles.length} real LinkedIn profiles, enriching with AI...`, 'success');
       
       const enrichedProfiles = await enrichProfileData(uniqueProfiles);
+      
+      // Debug: Log connection type breakdown
+      const connectionTypes = {};
+      enrichedProfiles.forEach(profile => {
+        const type = profile.connectionType || 'Unknown';
+        connectionTypes[type] = (connectionTypes[type] || 0) + 1;
+      });
+      addLog(`📊 CONNECTION TYPES: ${Object.entries(connectionTypes).map(([type, count]) => `${type}: ${count}`).join(', ')}`, 'info');
+      
       const domain = await getCompanyDomain(formData.targetCompany);
       addLog(`Generating email patterns for domain: ${domain}`, 'info');
       
