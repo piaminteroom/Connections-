@@ -216,20 +216,25 @@ const ConnectionFinder = () => {
           messages: [
             {
               role: "user",
-              content: `Analyze these profiles and categorize each person's potential connection to someone applying to ${formData.targetCompany} from ${formData.previousCompany} and ${formData.school}:
+              content: `You must categorize these LinkedIn profiles based on their connection to someone applying to ${formData.targetCompany}.
 
-Profiles: ${JSON.stringify(profiles)}
+The applicant went to: ${formData.school}
+The applicant previously worked at: ${formData.previousCompany}
+
+CRITICAL CATEGORIZATION RULES:
+- If a profile was found through a "${formData.school}" search (check priorityReason field), they are "School Alumni"
+- If a profile was found through a "${formData.previousCompany}" search (check priorityReason field), they are "Work Alumni"  
+- If priorityReason contains "Alumni", they are "School Alumni"
+- If priorityReason contains "Colleague", they are "Work Alumni"
+- Only use "Industry Contact" for profiles with no school/work connection
+
+Profiles to analyze: ${JSON.stringify(profiles)}
 
 For each profile, determine:
-1. Connection type: "School Alumni" (if they went to ${formData.school}), "Work Alumni" (if they worked at ${formData.previousCompany}), "Industry Contact", or "Direct Contact"
-2. Department classification
+1. Connection type using the rules above
+2. Department classification  
 3. Seniority level
 4. Likelihood they would respond to networking (1-10)
-
-IMPORTANT: 
-- If someone mentions ${formData.school} in their profile, they are "School Alumni"
-- If someone mentions ${formData.previousCompany} in their work history, they are "Work Alumni"
-- Prioritize finding both School Alumni AND Work Alumni connections
 
 Return ONLY a JSON array with this structure:
 [
@@ -252,28 +257,48 @@ Return ONLY a JSON array with this structure:
       if (!response.ok) {
         const errorText = await response.text();
         addLog(`OpenAI API error during enrichment (${response.status}): ${errorText}`, 'error');
-        return profiles.map(p => ({
-          ...p,
-          connectionType: p.isPriorityConnection ? p.priorityReason.includes('Alumni') ? 'School Alumni' : 'Work Alumni' : 'Industry Contact',
-          department: 'Unknown',
-          seniority: 'Mid',
-          responseRate: 6,
-          outreachTips: 'Mention your mutual connection and be specific about your ask.'
-        }));
+        return profiles.map(p => {
+          let connectionType = 'Industry Contact';
+          if (p.isPriorityConnection && p.priorityReason) {
+            if (p.priorityReason.includes('Alumni')) {
+              connectionType = 'School Alumni';
+            } else if (p.priorityReason.includes('Colleague')) {
+              connectionType = 'Work Alumni';
+            }
+          }
+          return {
+            ...p,
+            connectionType,
+            department: 'Unknown',
+            seniority: 'Mid',
+            responseRate: 6,
+            outreachTips: 'Mention your mutual connection and be specific about your ask.'
+          };
+        });
       }
 
       const data = await response.json();
       
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         addLog(`OpenAI enrichment returned unexpected format: ${JSON.stringify(data)}`, 'error');
-        return profiles.map(p => ({
-          ...p,
-          connectionType: p.isPriorityConnection ? p.priorityReason.includes('Alumni') ? 'School Alumni' : 'Work Alumni' : 'Industry Contact',
-          department: 'Unknown',
-          seniority: 'Mid',
-          responseRate: 6,
-          outreachTips: 'Mention your mutual connection and be specific about your ask.'
-        }));
+        return profiles.map(p => {
+          let connectionType = 'Industry Contact';
+          if (p.isPriorityConnection && p.priorityReason) {
+            if (p.priorityReason.includes('Alumni')) {
+              connectionType = 'School Alumni';
+            } else if (p.priorityReason.includes('Colleague')) {
+              connectionType = 'Work Alumni';
+            }
+          }
+          return {
+            ...p,
+            connectionType,
+            department: 'Unknown',
+            seniority: 'Mid',
+            responseRate: 6,
+            outreachTips: 'Mention your mutual connection and be specific about your ask.'
+          };
+        });
       }
       
       let enrichedProfiles = [];
@@ -296,14 +321,24 @@ Return ONLY a JSON array with this structure:
         addLog(`AI analysis complete: ${enrichedProfiles.length} profiles categorized`, 'success');
       } catch (parseError) {
         addLog('AI response parsing failed, using basic categorization', 'error');
-        enrichedProfiles = profiles.map(p => ({
-          ...p,
-          connectionType: p.isPriorityConnection ? p.priorityReason.includes('Alumni') ? 'School Alumni' : 'Work Alumni' : 'Industry Contact',
-          department: 'Unknown',
-          seniority: 'Mid',
-          responseRate: 6,
-          outreachTips: 'Mention your mutual connection and be specific about your ask.'
-        }));
+        enrichedProfiles = profiles.map(p => {
+          let connectionType = 'Industry Contact';
+          if (p.isPriorityConnection && p.priorityReason) {
+            if (p.priorityReason.includes('Alumni')) {
+              connectionType = 'School Alumni';
+            } else if (p.priorityReason.includes('Colleague')) {
+              connectionType = 'Work Alumni';
+            }
+          }
+          return {
+            ...p,
+            connectionType,
+            department: 'Unknown',
+            seniority: 'Mid',
+            responseRate: 6,
+            outreachTips: 'Mention your mutual connection and be specific about your ask.'
+          };
+        });
       }
 
       return enrichedProfiles;
