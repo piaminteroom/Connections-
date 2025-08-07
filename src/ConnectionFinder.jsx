@@ -87,7 +87,7 @@ const ConnectionFinder = () => {
       addLog(`Priority search: ${searchQuery.substring(0, 70)}...`, 'info');
       
       try {
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Longer delay for priority searches
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Much longer delay for priority searches
         
         const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=8`);
         
@@ -138,12 +138,12 @@ const ConnectionFinder = () => {
     const searchStrings = generateLinkedInSearchStrings(companyName);
     const allProfiles = [];
     
-    for (let i = 0; i < Math.min(searchStrings.length, 5); i++) {
+    for (let i = 0; i < Math.min(searchStrings.length, 3); i++) {
       const searchQuery = searchStrings[i];
       addLog(`Searching: ${searchQuery.substring(0, 80)}...`, 'info');
       
       try {
-        await new Promise(resolve => setTimeout(resolve, 2500)); // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 4000)); // Rate limiting
         
         const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=10`);
         
@@ -284,12 +284,12 @@ const ConnectionFinder = () => {
       
       const profiles = [];
       
-      for (let i = 0; i < Math.min(additionalSearches.length, 3); i++) {
+      for (let i = 0; i < Math.min(additionalSearches.length, 2); i++) {
         const searchQuery = additionalSearches[i];
         addLog(`Additional search: ${searchQuery.substring(0, 60)}...`, 'info');
         
         try {
-          await new Promise(resolve => setTimeout(resolve, 3500));
+          await new Promise(resolve => setTimeout(resolve, 5000));
           
           const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=8`);
           
@@ -571,6 +571,8 @@ Return ONLY a JSON array with this structure:
 
     try {
       addLog('Starting real LinkedIn profile discovery via Google Search...', 'info');
+      addLog('Waiting 3 seconds to avoid rate limits...', 'info');
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       // PRIORITY: Search for school alumni and former colleagues FIRST
       const priorityProfiles = await searchPriorityConnections(formData.targetCompany, formData.school, formData.previousCompany);
