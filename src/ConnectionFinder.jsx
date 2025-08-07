@@ -63,14 +63,12 @@ const ConnectionFinder = () => {
     // Former Colleague searches - people from your previous company now at target company  
     if (previousCompany) {
       prioritySearches.push(
-        // Search for people currently at target company who previously worked at your company
-        `site:linkedin.com/in/ "at ${companyName}" "${previousCompany}" (former OR previous OR ex)`,
-        `site:linkedin.com/in/ "works at ${companyName}" "${previousCompany}"`,
-        `site:linkedin.com/in/ "${companyName}" "formerly ${previousCompany}" OR "previously ${previousCompany}"`,
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (worked OR experience) -school -university`,
-        // Additional patterns ensuring they're currently at target company
-        `site:linkedin.com/in/ "@ ${companyName}" "${previousCompany}"`,
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" (alumni OR team OR colleague) -school`
+        // Simpler, more effective searches
+        `site:linkedin.com/in/ "${companyName}" "${previousCompany}"`,
+        `site:linkedin.com/in/ "${companyName}" "former ${previousCompany}"`,
+        `site:linkedin.com/in/ "${companyName}" "previously ${previousCompany}"`,
+        `site:linkedin.com/in/ "${companyName}" "ex-${previousCompany}"`,
+        `site:linkedin.com/in/ "${companyName}" "${previousCompany}" -school -university -college`
       );
     }
     
@@ -109,7 +107,9 @@ const ConnectionFinder = () => {
             priorityReason: searchQuery.includes(school) ? `${school} Alumni` : `Former ${previousCompany} Colleague`
           }));
           priorityProfiles.push(...priorityMarkedProfiles);
-          addLog(`🎯 Found ${profiles.length} priority connections!`, 'success');
+          
+          const connectionType = searchQuery.includes(school) ? 'school alumni' : 'work alumni';
+          addLog(`🎯 Found ${profiles.length} ${connectionType} from search: ${searchQuery.substring(0, 50)}...`, 'success');
         }
         
       } catch (error) {
@@ -168,13 +168,29 @@ const ConnectionFinder = () => {
         const companyLower = companyName.toLowerCase();
         
         // Validate that they currently work at target company
-        const currentlyWorksAtTarget = 
-          titleAndSnippet.includes(`at ${companyLower}`) ||
-          titleAndSnippet.includes(`@ ${companyLower}`) ||
-          titleAndSnippet.includes(`${companyLower}`) && 
-          (titleAndSnippet.includes('current') || titleAndSnippet.includes('present') || 
-           titleAndSnippet.includes('works at') || titleAndSnippet.includes('working at') ||
-           !titleAndSnippet.includes('former') && !titleAndSnippet.includes('ex-') && !titleAndSnippet.includes('previous'));
+        const hasAtCompany = titleAndSnippet.includes(`at ${companyLower}`);
+        const hasAtSymbol = titleAndSnippet.includes(`@ ${companyLower}`);
+        const hasCompanyName = titleAndSnippet.includes(`${companyLower}`);
+        const hasCurrentIndicators = titleAndSnippet.includes('current') || titleAndSnippet.includes('present') || 
+                                   titleAndSnippet.includes('works at') || titleAndSnippet.includes('working at');
+        const hasFormerIndicators = titleAndSnippet.includes('former') || titleAndSnippet.includes('ex-') || titleAndSnippet.includes('previous');
+        
+        const currentlyWorksAtTarget = hasAtCompany || hasAtSymbol || 
+          (hasCompanyName && (hasCurrentIndicators || !hasFormerIndicators));
+        
+        // Debug logging
+        if (hasCompanyName) {
+          console.log(`Profile check for ${companyName}:`, {
+            title: result.title,
+            snippet: result.snippet.substring(0, 100),
+            hasAtCompany,
+            hasAtSymbol,
+            hasCompanyName,
+            hasCurrentIndicators,
+            hasFormerIndicators,
+            currentlyWorksAtTarget
+          });
+        }
         
         if (currentlyWorksAtTarget) {
           // Extract basic info without OpenAI to save quota
