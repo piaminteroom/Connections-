@@ -16,17 +16,17 @@ const ConnectionFinder = () => {
     googleCSE: process.env.REACT_APP_GOOGLE_CSE_ID || '',
     hunter: process.env.REACT_APP_HUNTER_API_KEY || ''
   });
-
+  
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchComplete, setSearchComplete] = useState(false);
   const [extractionLog, setExtractionLog] = useState([]);
 
   const addLog = (message, type = 'info') => {
-    setExtractionLog(prev => [...prev, {
-      message,
+    setExtractionLog(prev => [...prev, { 
+      message, 
       type,
-      timestamp: new Date().toLocaleTimeString()
+      timestamp: new Date().toLocaleTimeString() 
     }]);
   };
 
@@ -82,7 +82,7 @@ const ConnectionFinder = () => {
             addLog(`Rate limit hit, waiting longer before next search...`, 'warning');
             await new Promise(resolve => setTimeout(resolve, 5000));
           } else {
-            addLog(`Priority search API error: ${response.status}`, 'error');
+          addLog(`Priority search API error: ${response.status}`, 'error');
           }
           continue;
         }
@@ -148,18 +148,18 @@ const ConnectionFinder = () => {
         }
         
         if (currentlyWorksAtTarget) {
-          const basicProfile = {
-            linkedinUrl: result.link,
-            title: result.title,
-            snippet: result.snippet,
-            company: companyName,
-            name: extractNameFromTitle(result.title),
-            jobTitle: extractJobTitleFromSnippet(result.snippet),
-            source: 'Google Search'
-          };
-          
-          if (basicProfile.name) {
-            profiles.push(basicProfile);
+        const basicProfile = {
+          linkedinUrl: result.link,
+          title: result.title,
+          snippet: result.snippet,
+          company: companyName,
+          name: extractNameFromTitle(result.title),
+          jobTitle: extractJobTitleFromSnippet(result.snippet),
+          source: 'Google Search'
+        };
+        
+        if (basicProfile.name) {
+          profiles.push(basicProfile);
           }
         }
       }
@@ -486,144 +486,144 @@ Return ONLY a JSON array with this structure:
 
   const getConnectionTypeColor = (type) => {
     switch (type) {
-      case 'School Alumni': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Work Alumni': return 'bg-green-100 text-green-800 border-green-200';
-      case 'Industry Contact': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'Direct Contact': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'School Alumni': return 'bg-blue-900 text-blue-200 border-blue-700';
+      case 'Work Alumni': return 'bg-green-900 text-green-200 border-green-700';
+      case 'Industry Contact': return 'bg-gray-700 text-gray-200 border-gray-600';
+      case 'Direct Contact': return 'bg-purple-900 text-purple-200 border-purple-700';
+      default: return 'bg-gray-700 text-gray-200 border-gray-600';
     }
   };
 
   const getLogTypeColor = (type) => {
     switch (type) {
-      case 'success': return 'text-green-600';
-      case 'error': return 'text-red-600';
-      case 'warning': return 'text-yellow-600';
-      default: return 'text-gray-600';
+      case 'success': return 'text-green-400';
+      case 'error': return 'text-red-400';
+      case 'warning': return 'text-yellow-400';
+      default: return 'text-gray-400';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-gray-900 border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">
-            <h1 className="text-3xl font-bold text-gray-900">Connection Finder</h1>
-            <p className="mt-2 text-gray-600">Find LinkedIn connections using Google Search API with verified emails</p>
-          </div>
+            <h1 className="text-3xl font-bold text-white">Connection Finder</h1>
+            <p className="mt-2 text-gray-400">Find LinkedIn connections using Google Search API with verified emails</p>
         </div>
-      </div>
-
+            </div>
+          </div>
+          
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Form */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+        <div className="bg-gray-900 rounded-xl shadow-sm border border-gray-800 p-8 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 <Building2 className="w-4 h-4 inline mr-2" />
                 Target Company
-              </label>
-              <input
-                type="text"
-                value={formData.targetCompany}
-                onChange={(e) => setFormData({...formData, targetCompany: e.target.value})}
+                </label>
+                <input
+                  type="text"
+                  value={formData.targetCompany}
+                  onChange={(e) => setFormData({...formData, targetCompany: e.target.value})}
                 placeholder="e.g., Apple, Google, Microsoft"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
+                />
+              </div>
+              
+              <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 <Building2 className="w-4 h-4 inline mr-2" />
                 Your Old Company
-              </label>
-              <input
-                type="text"
-                value={formData.previousCompany}
-                onChange={(e) => setFormData({...formData, previousCompany: e.target.value})}
+                </label>
+                <input
+                  type="text"
+                  value={formData.previousCompany}
+                  onChange={(e) => setFormData({...formData, previousCompany: e.target.value})}
                 placeholder="e.g., Microsoft, Amazon, Meta"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
+                />
+              </div>
+              
+              <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 <GraduationCap className="w-4 h-4 inline mr-2" />
                 School/University
-              </label>
-              <input
-                type="text"
-                value={formData.school}
-                onChange={(e) => setFormData({...formData, school: e.target.value})}
+                </label>
+                <input
+                  type="text"
+                  value={formData.school}
+                  onChange={(e) => setFormData({...formData, school: e.target.value})}
                 placeholder="e.g., Stanford, MIT, Harvard"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
+                />
+              </div>
+              
+              <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 <User className="w-4 h-4 inline mr-2" />
                 Your Name
-              </label>
-              <input
-                type="text"
-                value={formData.yourName}
-                onChange={(e) => setFormData({...formData, yourName: e.target.value})}
+                </label>
+                <input
+                  type="text"
+                  value={formData.yourName}
+                  onChange={(e) => setFormData({...formData, yourName: e.target.value})}
                 placeholder="Your full name"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
+                />
+              </div>
             </div>
-          </div>
-
+            
           {/* API Status */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+          <div className="bg-gray-800 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 {apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? (
-                  <Check className="w-5 h-5 text-green-500 mr-2" />
+                  <Check className="w-5 h-5 text-green-400 mr-2" />
                 ) : (
-                  <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+                  <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
                 )}
-                <span className="text-sm font-medium text-gray-700">API Configuration</span>
+                <span className="text-sm font-medium text-gray-300">API Configuration</span>
               </div>
-              <span className={`text-sm font-medium ${apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`text-sm font-medium ${apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? 'text-green-400' : 'text-red-400'}`}>
                 {apiKeys.openai && apiKeys.googleSearch && apiKeys.googleCSE ? 'All Configured' : 'Missing Keys'}
               </span>
             </div>
           </div>
 
           {/* Search Button */}
-          <button
-            onClick={discoverConnections}
+            <button
+              onClick={discoverConnections}
             disabled={loading || !formData.targetCompany}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-4 px-6 rounded-lg transition-colors flex items-center justify-center"
-          >
-            {loading ? (
-              <>
+            >
+              {loading ? (
+                <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 Finding Connections...
-              </>
-            ) : (
-              <>
+                </>
+              ) : (
+                <>
                 <Search className="w-5 h-5 mr-2" />
                 Find Priority Connections
-              </>
-            )}
-          </button>
+                </>
+              )}
+            </button>
         </div>
 
-        {/* Search Logs */}
+                {/* Search Logs */}
         {extractionLog.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Search Progress</h3>
+          <div className="bg-gray-900 rounded-xl shadow-sm border border-gray-800 p-6 mb-8">
+            <h3 className="text-lg font-semibold text-white mb-4">Search Progress</h3>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {extractionLog.map((log, index) => (
+            {extractionLog.map((log, index) => (
                 <div key={index} className="flex items-start text-sm">
-                  <span className="text-gray-400 mr-3 font-mono">{log.timestamp}</span>
+                  <span className="text-gray-500 mr-3 font-mono">{log.timestamp}</span>
                   <span className={getLogTypeColor(log.type)}>{log.message}</span>
-                </div>
-              ))}
+              </div>
+            ))}
             </div>
           </div>
         )}
@@ -632,34 +632,34 @@ Return ONLY a JSON array with this structure:
         {searchComplete && connections.length > 0 && (
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900">Found {connections.length} LinkedIn Connections</h2>
-              <p className="text-gray-600 mt-2">Priority connections shown with verified email patterns</p>
+              <h2 className="text-2xl font-bold text-white">Found {connections.length} LinkedIn Connections</h2>
+              <p className="text-gray-400 mt-2">Priority connections shown with verified email patterns</p>
             </div>
 
             {/* Priority Connections */}
             {connections.filter(c => c.isPriorityConnection).length > 0 && (
               <div>
-                <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
-                  <h3 className="text-lg font-semibold text-blue-900 text-center">
+                <div className="bg-blue-900 rounded-lg p-4 mb-6 border border-blue-700">
+                  <h3 className="text-lg font-semibold text-blue-100 text-center">
                     Priority Connections ({connections.filter(c => c.isPriorityConnection).length})
                   </h3>
-                  <p className="text-blue-700 text-center text-sm">School Alumni & Former Colleagues at {formData.targetCompany}</p>
+                  <p className="text-blue-300 text-center text-sm">School Alumni & Former Colleagues at {formData.targetCompany}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {connections.filter(connection => connection.isPriorityConnection).map((connection, index) => (
-                    <div key={`priority-${index}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                    <div key={`priority-${index}`} className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 hover:shadow-md transition-shadow">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                           <div className="flex items-center mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{connection.name}</h3>
-                            <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium border border-blue-200">
+                            <h3 className="text-lg font-semibold text-white">{connection.name}</h3>
+                            <span className="ml-2 px-2 py-1 bg-blue-600 text-blue-100 text-xs rounded-full font-medium border border-blue-500">
                               PRIORITY
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 mb-1">{connection.title}</p>
-                          <p className="text-sm text-gray-500 mb-1">{connection.department}</p>
-                          <p className="text-xs font-medium text-blue-600">PRIORITY: {connection.priorityReason}</p>
+                          <p className="text-sm text-gray-300 mb-1">{connection.title}</p>
+                          <p className="text-sm text-gray-400 mb-1">{connection.department}</p>
+                          <p className="text-xs font-medium text-blue-400">PRIORITY: {connection.priorityReason}</p>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getConnectionTypeColor(connection.connectionType)}`}>
                           {connection.connectionType}
@@ -667,24 +667,24 @@ Return ONLY a JSON array with this structure:
                       </div>
 
                       <div className="space-y-3 mb-4">
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm text-gray-400">
                           {connection.seniority} • {connection.responseRate}/10 response rate
                         </div>
                       </div>
 
-                      <div className="border-t pt-4">
+                      <div className="border-t border-gray-700 pt-4">
                         <div className="mb-3">
-                          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Best Email Pattern</label>
+                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Best Email Pattern</label>
                           <div className="flex items-center justify-between mt-1">
-                            <span className="text-sm font-mono text-gray-800">{connection.primaryEmail}</span>
-                            <span className={`text-xs font-medium ${connection.emailConfidence > 70 ? 'text-green-600' : 'text-yellow-600'}`}>
+                            <span className="text-sm font-mono text-gray-200">{connection.primaryEmail}</span>
+                            <span className={`text-xs font-medium ${connection.emailConfidence > 70 ? 'text-green-400' : 'text-yellow-400'}`}>
                               {connection.emailConfidence}%
                             </span>
                           </div>
                         </div>
 
                         {connection.outreachTips && (
-                          <div className="mb-3 p-3 bg-blue-50 rounded text-xs text-blue-800 border border-blue-200">
+                          <div className="mb-3 p-3 bg-blue-900 rounded text-xs text-blue-200 border border-blue-700">
                             <strong>Priority Outreach Tip:</strong> {connection.outreachTips}
                           </div>
                         )}
@@ -718,7 +718,7 @@ Return ONLY a JSON array with this structure:
             {connections.filter(c => !c.isPriorityConnection).length > 0 && (
               <div>
                 <div className="text-center mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-300">
                     Other Connections ({connections.filter(c => !c.isPriorityConnection).length})
                   </h3>
                   <p className="text-gray-500">Additional LinkedIn connections at {formData.targetCompany}</p>
@@ -726,12 +726,12 @@ Return ONLY a JSON array with this structure:
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {connections.filter(connection => !connection.isPriorityConnection).map((connection, index) => (
-                    <div key={`regular-${index}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                    <div key={`regular-${index}`} className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 hover:shadow-md transition-shadow">
                       <div className="flex items-start justify-between mb-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{connection.name}</h3>
-                          <p className="text-sm text-gray-600">{connection.title}</p>
-                          <p className="text-sm text-gray-500">{connection.department}</p>
+                          <h3 className="text-lg font-semibold text-white">{connection.name}</h3>
+                          <p className="text-sm text-gray-300">{connection.title}</p>
+                          <p className="text-sm text-gray-400">{connection.department}</p>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getConnectionTypeColor(connection.connectionType)}`}>
                           {connection.connectionType}
@@ -739,17 +739,17 @@ Return ONLY a JSON array with this structure:
                       </div>
 
                       <div className="space-y-2 mb-4">
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm text-gray-400">
                           {connection.seniority} • {connection.responseRate}/10 response rate
                         </div>
                       </div>
 
-                      <div className="border-t pt-4">
+                      <div className="border-t border-gray-700 pt-4">
                         <div className="mb-3">
-                          <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Best Email Pattern</label>
+                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Best Email Pattern</label>
                           <div className="flex items-center justify-between mt-1">
-                            <span className="text-sm font-mono text-gray-800">{connection.primaryEmail}</span>
-                            <span className={`text-xs font-medium ${connection.emailConfidence > 70 ? 'text-green-600' : 'text-yellow-600'}`}>
+                            <span className="text-sm font-mono text-gray-200">{connection.primaryEmail}</span>
+                            <span className={`text-xs font-medium ${connection.emailConfidence > 70 ? 'text-green-400' : 'text-yellow-400'}`}>
                               {connection.emailConfidence}%
                             </span>
                           </div>
@@ -784,10 +784,10 @@ Return ONLY a JSON array with this structure:
 
         {searchComplete && connections.length === 0 && (
           <div className="text-center py-12">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Connections Found</h3>
-              <p className="text-gray-600">Try a larger company or check your API configuration.</p>
+            <div className="bg-gray-900 rounded-xl shadow-sm border border-gray-800 p-8">
+              <AlertCircle className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No Connections Found</h3>
+              <p className="text-gray-400">Try a larger company or check your API configuration.</p>
             </div>
           </div>
         )}
