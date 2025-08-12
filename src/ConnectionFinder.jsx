@@ -143,7 +143,7 @@ const ConnectionFinder = () => {
     if (previousCompany) {
       const companyVariations = [
         previousCompany,
-        previousCompany.replace(/Inc\.|LLC|Corp|Corporation|Ltd|Limited/gi, '').trim(),
+        previousCompany.replace(/Inc\\.|LLC|Corp|Corporation|Ltd|Limited/gi, '').trim(),
         previousCompany.split(' ')[0] // First word for companies like "Meta Platforms"
       ];
       
@@ -289,7 +289,7 @@ const ConnectionFinder = () => {
         if (words.length >= 2 && words.length <= 4 && 
             name.length > 3 && name.length < 50 &&
             !/\d/.test(name) && // No numbers
-            !/[^\w\s\.\-']/.test(name)) { // Only letters, spaces, dots, hyphens, apostrophes
+            !/[^\w\s.'-]/.test(name)) { // Only letters, spaces, dots, hyphens, apostrophes
           return name;
         }
       }
@@ -395,8 +395,7 @@ const ConnectionFinder = () => {
     const socialProfiles = [];
     const socialSearches = [];
     
-    // GitHub organization searches
-    const companyGithub = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // GitHub searches
     socialSearches.push(
       `site:github.com "${companyName}" (engineer OR developer) followers`,
       `site:github.com "${companyName}" "software engineer" OR "senior developer"`,
@@ -485,9 +484,9 @@ const ConnectionFinder = () => {
       }
       
       // Company website team pages
-      else if (result.snippet && result.snippet.toLowerCase().includes('engineer') || 
+      else if (result.snippet && (result.snippet.toLowerCase().includes('engineer') || 
                result.snippet.toLowerCase().includes('developer') ||
-               result.snippet.toLowerCase().includes('manager')) {
+               result.snippet.toLowerCase().includes('manager'))) {
         profileData = {
           name: extractNameFromTeamPage(result.snippet),
           title: extractJobTitleFromSnippet(result.snippet),
@@ -641,6 +640,9 @@ const ConnectionFinder = () => {
             break;
           case 'firstnamel':
             prioritizedPatterns.push(`${f}${l[0]}@${domain}`);
+            break;
+          default:
+            // Handle any other patterns
             break;
         }
       });
@@ -1292,6 +1294,7 @@ Return ONLY a JSON array with this structure:
                             </a>
                           </div>
                         </div>
+                      </div>
                     </div>
                   ))}
                 </div>
