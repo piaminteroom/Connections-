@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Building, GraduationCap, Mail, ExternalLink, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import './custom.css';
 
 const ConnectionFinder = () => {
   // Add debugging
@@ -21,49 +19,10 @@ const ConnectionFinder = () => {
     yourName: ''
   });
   
-  // Load API keys from environment variables (development only)
-  const [apiKeys, setApiKeys] = useState({
-    openai: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_OPENAI_API_KEY || '' : '',
-    googleSearch: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_GOOGLE_SEARCH_API_KEY || '' : '',
-    googleCSE: process.env.NODE_ENV === 'development' ? process.env.REACT_APP_GOOGLE_CSE_ID || '' : ''
-  });
-  
-  const [connections, setConnections] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [searchComplete, setSearchComplete] = useState(false);
-  const [extractionLog, setExtractionLog] = useState([]);
-  const [error, setError] = useState(null);
+  const [connections] = useState([]);
+  const [loading] = useState(false);
+  const [searchComplete] = useState(false);
 
-  // Add error boundary
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 lg:p-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl font-bold text-red-400 mb-4">Something went wrong</h1>
-          <p className="text-slate-300 mb-4">{error.message}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Reload Page
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Wrap all functions in try-catch
-  const safeFunction = (fn, name) => {
-    return async (...args) => {
-      try {
-        return await fn(...args);
-      } catch (err) {
-        console.error(`Error in ${name}:`, err);
-        setError(err);
-        throw err;
-      }
-    };
-  };
 
   // TEST: Simple render first
   return (
