@@ -1,5 +1,4 @@
 
-=======
 # Connection Finder
 
 A React application that helps you find potential connections at target companies through AI-powered profile generation and email verification.
@@ -79,5 +78,4 @@ A React application that helps you find potential connections at target companie
 
 ## Note
 
-This tool finds real LinkedIn profiles and verifies emails for legitimate networking purposes. Please respect rate limits and terms of service for all APIs used. 
->>>>>>> master
+This tool finds real LinkedIn profiles and verifies emails for legitimate networking purposes. Please respect rate limits and terms of service for all APIs used.
