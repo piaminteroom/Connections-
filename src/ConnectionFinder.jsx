@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
-<<<<<<< Updated upstream
-import { Search, User, Building2, GraduationCap, Mail, ExternalLink, Check, AlertCircle, Loader2 } from 'lucide-react';
-=======
 import { Search, Building, GraduationCap, Mail, ExternalLink, Loader2, AlertCircle, CheckCircle, Sparkles, Heart, Star, Users, Globe, Target, Zap } from 'lucide-react';
 import './custom.css';
->>>>>>> Stashed changes
 
 const ConnectionFinder = () => {
   const [formData, setFormData] = useState({
@@ -15,20 +11,12 @@ const ConnectionFinder = () => {
   });
   
   // Load API keys from environment variables
-<<<<<<< Updated upstream
-  const [apiKeys, setApiKeys] = useState({
+  const apiKeys = {
     openai: process.env.REACT_APP_OPENAI_API_KEY || '',
     googleSearch: process.env.REACT_APP_GOOGLE_SEARCH_API_KEY || '',
     googleCSE: process.env.REACT_APP_GOOGLE_CSE_ID || '',
     hunter: process.env.REACT_APP_HUNTER_API_KEY || ''
-  });
-=======
-  const apiKeys = {
-    openai: process.env.REACT_APP_OPENAI_API_KEY || '',
-    googleSearch: process.env.REACT_APP_GOOGLE_SEARCH_API_KEY || '',
-    googleCSE: process.env.REACT_APP_GOOGLE_CSE_ID || ''
   };
->>>>>>> Stashed changes
   
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -44,15 +32,6 @@ const ConnectionFinder = () => {
   };
 
   const generateLinkedInSearchStrings = (companyName) => {
-<<<<<<< Updated upstream
-    const searches = [
-      `site:linkedin.com/in/ "${companyName}" (software engineer OR developer)`,
-      `site:linkedin.com/in/ "${companyName}" (product manager OR "product management")`,
-      `site:linkedin.com/in/ "${companyName}" (data scientist OR "data science")`,
-      `site:linkedin.com/in/ "${companyName}" (designer OR "user experience")`,
-      `site:linkedin.com/in/ "${companyName}" (marketing OR sales)`,
-      `site:linkedin.com/in/ "${companyName}" (engineering OR manager)`
-=======
     // Generate precise Boolean search strings for LinkedIn profiles - OPTIMIZED ORDER
     const searches = [
       // HIGH-VALUE roles first (decision makers and senior folks)
@@ -68,28 +47,10 @@ const ConnectionFinder = () => {
       
       // Broader searches for volume
       `site:linkedin.com/in/ "${companyName}" ("engineer" OR "developer" OR "technical")`
->>>>>>> Stashed changes
     ];
     return searches;
   };
 
-<<<<<<< Updated upstream
-  const generatePriorityConnectionSearches = (companyName, school, previousCompany) => {
-    const prioritySearches = [];
-    
-    if (school) {
-      prioritySearches.push(
-        `site:linkedin.com/in/ "${companyName}" "${school}" (alumni OR graduated OR studied)`,
-        `site:linkedin.com/in/ "${companyName}" "${school}" (university OR college OR school)`
-      );
-    }
-    
-    if (previousCompany) {
-      prioritySearches.push(
-        `site:linkedin.com/in/ "${companyName}" "${previousCompany}"`,
-        `site:linkedin.com/in/ "${companyName}" "former ${previousCompany}"`
-      );
-=======
   // Enhanced priority searches with better targeting - WORK ALUMNI FIRST
   const generatePriorityConnectionSearches = (companyName, school, previousCompany) => {
     const prioritySearches = [];
@@ -146,21 +107,19 @@ const ConnectionFinder = () => {
           );
         }
       });
->>>>>>> Stashed changes
+    }
+    
+    return prioritySearches;
+  };
     }
     
     return prioritySearches;
   };
 
-<<<<<<< Updated upstream
-  const searchPriorityConnections = async (companyName, school, previousCompany) => {
-    addLog(`PRIORITY SEARCH: Looking for ${school} alumni and ${previousCompany} colleagues at ${companyName}...`, 'info');
-=======
   // Priority search for WORK ALUMNI FIRST, then school alumni
   const searchPriorityConnections = async (companyName, school, previousCompany) => {
     const maxWorkColleagues = 8; // Target number of work colleagues
     addLog(`🎯 PRIORITY SEARCH: Looking for ${previousCompany} work colleagues FIRST (target: ${maxWorkColleagues}), then ${school} alumni at ${companyName}...`, 'info');
->>>>>>> Stashed changes
     
     const prioritySearches = generatePriorityConnectionSearches(companyName, school, previousCompany);
     const priorityProfiles = [];
@@ -176,27 +135,6 @@ const ConnectionFinder = () => {
       addLog(`${isWorkColleague ? '💼 WORK' : '🎓 SCHOOL'} search: ${searchQuery.substring(0, 70)}...`, 'info');
       
       try {
-<<<<<<< Updated upstream
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        
-        const response = await fetch(`https://www.googleapis.com/customsearch/v1?key=${apiKeys.googleSearch}&cx=${apiKeys.googleCSE}&q=${encodeURIComponent(searchQuery)}&num=8`);
-        
-        if (!response.ok) {
-          if (response.status === 429) {
-            addLog(`Rate limit hit, waiting longer before next search...`, 'warning');
-            await new Promise(resolve => setTimeout(resolve, 5000));
-          } else {
-          addLog(`Priority search API error: ${response.status}`, 'error');
-          }
-          continue;
-        }
-        
-        const data = await response.json();
-        
-        if (data.items) {
-          const profiles = await extractProfilesFromSearchResults(data.items, companyName);
-          const priorityMarkedProfiles = profiles.map(profile => ({
-=======
         // Shorter delay for work colleagues (higher priority)
         await new Promise(resolve => setTimeout(resolve, isWorkColleague ? 1500 : 2500));
         
@@ -214,7 +152,6 @@ const ConnectionFinder = () => {
           });
           
           const priorityMarkedProfiles = newProfiles.map(profile => ({
->>>>>>> Stashed changes
             ...profile,
             isPriorityConnection: true,
             priorityReason: isWorkColleague ? `Former ${previousCompany} Colleague` : `${school} Alumni`,
@@ -222,12 +159,7 @@ const ConnectionFinder = () => {
           }));
           
           priorityProfiles.push(...priorityMarkedProfiles);
-<<<<<<< Updated upstream
           
-          const isSchoolSearch = school && searchQuery.includes(school);
-          const connectionType = isSchoolSearch ? 'school alumni' : 'work alumni';
-          addLog(`Found ${profiles.length} ${connectionType} from search: ${searchQuery.substring(0, 50)}...`, 'success');
-=======
           addLog(`${isWorkColleague ? '💼' : '🎓'} Found ${newProfiles.length} ${isWorkColleague ? 'WORK' : 'school'} connections!`, 'success');
           
           // Track work colleagues found
@@ -238,7 +170,6 @@ const ConnectionFinder = () => {
               break;
             }
           }
->>>>>>> Stashed changes
         }
         
       } catch (error) {
@@ -247,20 +178,11 @@ const ConnectionFinder = () => {
       }
     }
     
-<<<<<<< Updated upstream
-    const schoolAlumni = priorityProfiles.filter(p => p.priorityReason && p.priorityReason.includes('Alumni')).length;
-    const workAlumni = priorityProfiles.filter(p => p.priorityReason && p.priorityReason.includes('Colleague')).length;
-    addLog(`PRIORITY SUMMARY: ${schoolAlumni} school alumni, ${workAlumni} work alumni (${priorityProfiles.length} total)`, 'info');
-=======
     // Sort by priority score (work colleagues first)
     priorityProfiles.sort((a, b) => (b.priorityScore || 0) - (a.priorityScore || 0));
->>>>>>> Stashed changes
-    
     return priorityProfiles;
   };
 
-<<<<<<< Updated upstream
-=======
   const searchGoogleForLinkedInProfiles = async (companyName) => {
     addLog(`🔍 Searching Google for ${companyName} LinkedIn profiles with optimized queries...`, 'info');
     
@@ -313,8 +235,6 @@ const ConnectionFinder = () => {
     
     return allProfiles;
   };
-
->>>>>>> Stashed changes
   const extractProfilesFromSearchResults = async (searchResults, companyName) => {
     const profiles = [];
     
@@ -367,17 +287,6 @@ const ConnectionFinder = () => {
     return profiles;
   };
 
-<<<<<<< Updated upstream
-  const extractNameFromTitle = (title) => {
-    if (!title) return null;
-    
-    const match = title.match(/^([^-|]+)/);
-    if (match) {
-      let name = match[1].trim();
-      name = name.replace(/^(Dr\.?|Mr\.?|Ms\.?|Mrs\.?)\s+/i, '');
-      if (name.split(' ').length >= 2 && name.length > 3) {
-        return name;
-=======
   // Enhanced name extraction with better patterns for WORK contexts
   const extractNameFromTitle = (title) => {
     if (!title) return null;
@@ -425,15 +334,6 @@ const ConnectionFinder = () => {
     return null;
   };
 
-<<<<<<< Updated upstream
-  const extractJobTitleFromSnippet = (snippet) => {
-    if (!snippet) return 'Professional';
-    
-    const titlePatterns = [
-      /(?:works as|working as|employed as)\s+([^.]+)/i,
-      /(?:^|\s)([A-Z][a-z]+\s+(?:Engineer|Manager|Director|Developer|Designer|Analyst|Specialist|Coordinator|Assistant|Associate|Lead|Senior|Principal))/,
-      /(?:title|position|role):\s*([^.]+)/i
-=======
   // Enhanced job title extraction with WORK-FOCUSED patterns
   const extractJobTitleFromSnippet = (snippet) => {
     if (!snippet) return 'Professional';
@@ -462,15 +362,11 @@ const ConnectionFinder = () => {
       
       // Role context patterns
       /(?:role|position|title)\s*[:\-]?\s*([^.,;]+)/i
->>>>>>> Stashed changes
     ];
     
     for (const pattern of titlePatterns) {
       const match = snippet.match(pattern);
       if (match) {
-<<<<<<< Updated upstream
-        return match[1].trim();
-=======
         let title = match[1].trim();
         
         // Clean up the title for work contexts
@@ -492,7 +388,6 @@ const ConnectionFinder = () => {
           
           return title;
         }
->>>>>>> Stashed changes
       }
     }
     
