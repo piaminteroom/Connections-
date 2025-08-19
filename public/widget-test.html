@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectSphere Widget Test</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .demo-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .widget-container {
+            margin: 2rem 0;
+            padding: 1rem;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .code-snippet {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        .control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .control label {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+        .control input, .control select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+        button {
+            background: #64748b;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background: #475569;
+        }
+        .event-log {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        .event-log-item {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem;
+            border-radius: 4px;
+        }
+        .event-log-item.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .event-log-item.error {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ConnectSphere Widget Demo</h1>
+            <p>Test the embeddable widget with different configurations</p>
+        </div>
+
+        <!-- Basic Widget Demo -->
+        <div class="demo-section">
+            <h2>Basic Widget (Data Attributes)</h2>
+            <p>Simple embedding using HTML data attributes:</p>
+            
+            <div class="code-snippet">
+&lt;div data-connectsphere 
+     data-cs-title="Find Your Network"
+     data-cs-primary-color="#64748b"&gt;
+&lt;/div&gt;
+            </div>
+
+            <div class="widget-container">
+                <div data-connectsphere 
+                     data-cs-title="Find Your Network"
+                     data-cs-primary-color="#64748b">
+                </div>
+            </div>
+        </div>
+
+        <!-- Customizable Widget Demo -->
+        <div class="demo-section">
+            <h2>Customizable Widget (JavaScript API)</h2>
+            <p>Dynamically configure the widget:</p>
+
+            <div class="controls">
+                <div class="control">
+                    <label for="widget-title">Title:</label>
+                    <input type="text" id="widget-title" value="Custom Networking Tool">
+                </div>
+                <div class="control">
+                    <label for="primary-color">Primary Color:</label>
+                    <input type="color" id="primary-color" value="#3b82f6">
+                </div>
+                <div class="control">
+                    <label for="accent-color">Accent Color:</label>
+                    <input type="color" id="accent-color" value="#2563eb">
+                </div>
+                <div class="control">
+                    <label for="max-width">Max Width:</label>
+                    <select id="max-width">
+                        <option value="400px">400px</option>
+                        <option value="500px" selected>500px</option>
+                        <option value="600px">600px</option>
+                        <option value="100%">100%</option>
+                    </select>
+                </div>
+                <div class="control">
+                    <label for="compact-mode">Compact Mode:</label>
+                    <input type="checkbox" id="compact-mode">
+                </div>
+            </div>
+
+            <button onclick="updateWidget()">Update Widget</button>
+            <button onclick="recreateWidget()">Recreate Widget</button>
+
+            <div class="widget-container">
+                <div id="custom-widget"></div>
+            </div>
+
+            <div class="code-snippet" id="generated-code">
+// JavaScript API usage will be shown here
+            </div>
+        </div>
+
+        <!-- Compact Widget Demo -->
+        <div class="demo-section">
+            <h2>Compact Widget</h2>
+            <p>Space-efficient version for sidebars:</p>
+
+            <div style="display: flex; gap: 2rem; align-items: start;">
+                <div style="flex: 1;">
+                    <div class="widget-container" style="max-width: 350px;">
+                        <div data-connectsphere 
+                             data-cs-compact-mode="true"
+                             data-cs-title="Quick Connect"
+                             data-cs-max-width="300px"
+                             data-cs-primary-color="#059669"
+                             data-cs-show-logo="false">
+                        </div>
+                    </div>
+                </div>
+                <div style="flex: 1;">
+                    <div class="code-snippet">
+&lt;div data-connectsphere 
+     data-cs-compact-mode="true"
+     data-cs-title="Quick Connect"
+     data-cs-max-width="300px"
+     data-cs-primary-color="#059669"
+     data-cs-show-logo="false"&gt;
+&lt;/div&gt;
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Handling Demo -->
+        <div class="demo-section">
+            <h2>Event Handling</h2>
+            <p>Monitor widget events in real-time:</p>
+
+            <div class="widget-container">
+                <div id="event-widget"></div>
+            </div>
+
+            <h4>Event Log:</h4>
+            <div class="event-log" id="event-log">
+                <div class="event-log-item">Waiting for events...</div>
+            </div>
+
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <!-- Widget Script (Mock Implementation) -->
+    <script>
+        // Mock implementation of the ConnectSphere widget
+        // In production, this would be loaded from your CDN
+
+        class MockConnectSphereWidget {
+            constructor(containerId, config = {}) {
+                this.containerId = containerId;
+                this.config = {
+                    title: "Find Your Network",
+                    subtitle: "Discover professional connections instantly",
+                    primaryColor: "#64748b",
+                    accentColor: "#475569",
+                    backgroundColor: "#ffffff",
+                    borderRadius: "16px",
+                    showLogo: true,
+                    compactMode: false,
+                    maxWidth: "600px",
+                    showPoweredBy: true,
+                    ...config
+                };
+                this.container = null;
+                this.init();
+            }
+
+            init() {
+                this.container = document.getElementById(this.containerId);
+                if (!this.container) {
+                    console.error(`Container with ID "${this.containerId}" not found`);
+                    return;
+                }
+                this.render();
+            }
+
+            render() {
+                const { title, subtitle, primaryColor, accentColor, compactMode, maxWidth, showLogo } = this.config;
+                
+                this.container.innerHTML = `
+                    <div style="
+                        max-width: ${maxWidth};
+                        background: white;
+                        border-radius: 16px;
+                        border: 1px solid #e2e8f0;
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                        overflow: hidden;
+                        font-family: Inter, sans-serif;
+                    ">
+                        <div style="
+                            background: linear-gradient(135deg, ${primaryColor}, ${accentColor});
+                            color: white;
+                            padding: ${compactMode ? '1rem' : '1.5rem'};
+                            text-align: center;
+                            position: relative;
+                        ">
+                            ${compactMode ? `
+                                <button onclick="toggleWidget('${this.containerId}')" style="
+                                    position: absolute;
+                                    top: 1rem;
+                                    right: 1rem;
+                                    background: none;
+                                    border: none;
+                                    color: white;
+                                    cursor: pointer;
+                                    font-size: 1.2rem;
+                                ">+</button>
+                            ` : ''}
+                            ${showLogo ? `
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">✨</span>
+                                    <span style="font-weight: 800;">ConnectSphere</span>
+                                </div>
+                            ` : ''}
+                            <h3 style="margin: 0; font-size: ${compactMode ? '1rem' : '1.2rem'};">${title}</h3>
+                            ${!compactMode ? `<p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;">${subtitle}</p>` : ''}
+                        </div>
+                        <div id="${this.containerId}-content" style="padding: ${compactMode ? '1rem' : '1.5rem'}; ${compactMode ? 'display: none;' : ''}">
+                            <div style="margin-bottom: 1rem;">
+                                <input type="text" placeholder="Target Company (e.g., Microsoft)" style="
+                                    width: 100%;
+                                    padding: 0.75rem;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 8px;
+                                    margin-bottom: 0.75rem;
+                                    box-sizing: border-box;
+                                ">
+                                <input type="text" placeholder="Previous Company (e.g., Google)" style="
+                                    width: 100%;
+                                    padding: 0.75rem;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 8px;
+                                    margin-bottom: 0.75rem;
+                                    box-sizing: border-box;
+                                ">
+                                <input type="text" placeholder="School/University (e.g., Stanford)" style="
+                                    width: 100%;
+                                    padding: 0.75rem;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 8px;
+                                    margin-bottom: 0.75rem;
+                                    box-sizing: border-box;
+                                ">
+                                <input type="text" placeholder="Your Name (e.g., Alex Chen)" style="
+                                    width: 100%;
+                                    padding: 0.75rem;
+                                    border: 1px solid #d1d5db;
+                                    border-radius: 8px;
+                                    box-sizing: border-box;
+                                ">
+                            </div>
+                            <button onclick="simulateSearch('${this.containerId}')" style="
+                                width: 100%;
+                                background: linear-gradient(135deg, ${primaryColor}, ${accentColor});
+                                color: white;
+                                border: none;
+                                padding: 0.75rem;
+                                border-radius: 8px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 0.5rem;
+                            ">
+                                🔍 Find Connections
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            updateConfig(newConfig) {
+                this.config = { ...this.config, ...newConfig };
+                this.render();
+            }
+        }
+
+        // Auto-initialize widgets with data attributes
+        function initializeDataAttributeWidgets() {
+            const widgets = document.querySelectorAll('[data-connectsphere]');
+            widgets.forEach((element, index) => {
+                const config = {};
+                Array.from(element.attributes).forEach(attr => {
+                    if (attr.name.startsWith('data-cs-')) {
+                        const key = attr.name.replace('data-cs-', '').replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+                        config[key] = attr.value === 'true' ? true : attr.value === 'false' ? false : attr.value;
+                    }
+                });
+                
+                if (!element.id) {
+                    element.id = `connectsphere-widget-${index}`;
+                }
+                
+                new MockConnectSphereWidget(element.id, config);
+            });
+        }
+
+        // Global functions for demo
+        let customWidget = null;
+
+        function updateWidget() {
+            const config = {
+                title: document.getElementById('widget-title').value,
+                primaryColor: document.getElementById('primary-color').value,
+                accentColor: document.getElementById('accent-color').value,
+                maxWidth: document.getElementById('max-width').value,
+                compactMode: document.getElementById('compact-mode').checked
+            };
+
+            if (customWidget) {
+                customWidget.updateConfig(config);
+            } else {
+                customWidget = new MockConnectSphereWidget('custom-widget', config);
+            }
+
+            // Update generated code
+            const codeBlock = document.getElementById('generated-code');
+            codeBlock.textContent = `
+const widget = new ConnectSphereWidget('custom-widget', {
+    title: "${config.title}",
+    primaryColor: "${config.primaryColor}",
+    accentColor: "${config.accentColor}",
+    maxWidth: "${config.maxWidth}",
+    compactMode: ${config.compactMode}
+});`;
+        }
+
+        function recreateWidget() {
+            const container = document.getElementById('custom-widget');
+            container.innerHTML = '';
+            customWidget = null;
+            updateWidget();
+        }
+
+        function toggleWidget(containerId) {
+            const content = document.getElementById(containerId + '-content');
+            const button = content.previousElementSibling.querySelector('button');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                button.textContent = '−';
+            } else {
+                content.style.display = 'none';
+                button.textContent = '+';
+            }
+        }
+
+        function simulateSearch(containerId) {
+            addLogItem('🔍 Starting connection search...', 'info');
+            
+            setTimeout(() => {
+                const mockConnections = [
+                    { name: 'Sarah Johnson', title: 'Senior Software Engineer' },
+                    { name: 'Mike Chen', title: 'Product Manager' }
+                ];
+                
+                addLogItem(`✅ Found ${mockConnections.length} connections`, 'success');
+                
+                // Trigger custom event
+                const event = new CustomEvent('connectsphere:connections', {
+                    detail: { connections: mockConnections }
+                });
+                document.dispatchEvent(event);
+            }, 2000);
+        }
+
+        function addLogItem(message, type = 'info') {
+            const log = document.getElementById('event-log');
+            const item = document.createElement('div');
+            item.className = `event-log-item ${type}`;
+            item.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(item);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            const log = document.getElementById('event-log');
+            log.innerHTML = '<div class="event-log-item">Log cleared...</div>';
+        }
+
+        // Event listeners
+        document.addEventListener('connectsphere:connections', function(event) {
+            addLogItem(`📊 Connections event: Found ${event.detail.connections.length} connections`, 'success');
+        });
+
+        document.addEventListener('connectsphere:error', function(event) {
+            addLogItem(`❌ Error event: ${event.detail.error}`, 'error');
+        });
+
+        // Initialize widgets when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDataAttributeWidgets();
+            
+            // Create event monitoring widget
+            new MockConnectSphereWidget('event-widget', {
+                title: 'Event Demo Widget',
+                primaryColor: '#7c3aed',
+                accentColor: '#6d28d9'
+            });
+
+            // Initial custom widget
+            updateWidget();
+        });
+
+        // Global API
+        window.ConnectSphereWidget = MockConnectSphereWidget;
+        window.embedConnectSphere = function(containerId, config) {
+            return new MockConnectSphereWidget(containerId, config);
+        };
+    </script>
+</body>
+</html>

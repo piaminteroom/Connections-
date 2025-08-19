@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectSphere Widget Examples</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 2rem;
+            background: #f8fafc;
+            color: #334155;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .example {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .example h3 {
+            color: #1e293b;
+            margin-top: 0;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+        .widget-demo {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            min-height: 400px;
+        }
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        .config-table th,
+        .config-table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .config-table th {
+            background: #f1f5f9;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ConnectSphere Widget Integration Guide</h1>
+            <p>Embed professional networking discovery on your website in minutes</p>
+        </div>
+
+        <!-- Quick Start -->
+        <div class="example">
+            <h2>🚀 Quick Start</h2>
+            <p>Add the ConnectSphere widget to your website in 3 simple steps:</p>
+            
+            <h3>Step 1: Include the Script</h3>
+            <div class="code-block">
+&lt;script src="https://your-domain.com/embed.js"&gt;&lt;/script&gt;
+            </div>
+
+            <h3>Step 2: Add the Widget Container</h3>
+            <div class="code-block">
+&lt;div data-connectsphere&gt;&lt;/div&gt;
+            </div>
+
+            <h3>Step 3: Customize (Optional)</h3>
+            <div class="code-block">
+&lt;div data-connectsphere 
+     data-cs-title="Find Your Network"
+     data-cs-primary-color="#3b82f6"
+     data-cs-compact-mode="true"&gt;
+&lt;/div&gt;
+            </div>
+        </div>
+
+        <!-- Configuration Options -->
+        <div class="example">
+            <h2>⚙️ Configuration Options</h2>
+            <table class="config-table">
+                <thead>
+                    <tr>
+                        <th>Option</th>
+                        <th>Type</th>
+                        <th>Default</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>title</code></td>
+                        <td>string</td>
+                        <td>"Find Your Network"</td>
+                        <td>Widget title text</td>
+                    </tr>
+                    <tr>
+                        <td><code>subtitle</code></td>
+                        <td>string</td>
+                        <td>"Discover professional connections instantly"</td>
+                        <td>Widget subtitle text</td>
+                    </tr>
+                    <tr>
+                        <td><code>primaryColor</code></td>
+                        <td>string</td>
+                        <td>"#64748b"</td>
+                        <td>Primary theme color (hex)</td>
+                    </tr>
+                    <tr>
+                        <td><code>accentColor</code></td>
+                        <td>string</td>
+                        <td>"#475569"</td>
+                        <td>Accent theme color (hex)</td>
+                    </tr>
+                    <tr>
+                        <td><code>backgroundColor</code></td>
+                        <td>string</td>
+                        <td>"#ffffff"</td>
+                        <td>Widget background color</td>
+                    </tr>
+                    <tr>
+                        <td><code>borderRadius</code></td>
+                        <td>string</td>
+                        <td>"16px"</td>
+                        <td>Border radius for rounded corners</td>
+                    </tr>
+                    <tr>
+                        <td><code>maxWidth</code></td>
+                        <td>string</td>
+                        <td>"600px"</td>
+                        <td>Maximum widget width</td>
+                    </tr>
+                    <tr>
+                        <td><code>compactMode</code></td>
+                        <td>boolean</td>
+                        <td>false</td>
+                        <td>Enable compact/collapsible mode</td>
+                    </tr>
+                    <tr>
+                        <td><code>showLogo</code></td>
+                        <td>boolean</td>
+                        <td>true</td>
+                        <td>Show ConnectSphere logo</td>
+                    </tr>
+                    <tr>
+                        <td><code>showPoweredBy</code></td>
+                        <td>boolean</td>
+                        <td>true</td>
+                        <td>Show "Powered by" footer</td>
+                    </tr>
+                    <tr>
+                        <td><code>targetCompany</code></td>
+                        <td>string</td>
+                        <td>""</td>
+                        <td>Pre-fill target company field</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- HTML Data Attributes Example -->
+        <div class="example">
+            <h3>📝 Example 1: HTML Data Attributes (Recommended)</h3>
+            <p>The easiest way to embed the widget with custom styling:</p>
+            
+            <div class="code-block">
+&lt;!-- Custom branded widget --&gt;
+&lt;div data-connectsphere 
+     data-cs-title="Find Alumni Connections"
+     data-cs-subtitle="Connect with graduates at top companies"
+     data-cs-primary-color="#2563eb"
+     data-cs-accent-color="#1d4ed8"
+     data-cs-target-company="Microsoft"
+     data-cs-max-width="500px"&gt;
+&lt;/div&gt;
+
+&lt;script src="https://your-domain.com/embed.js"&gt;&lt;/script&gt;
+            </div>
+
+            <div class="widget-demo">
+                <div id="example1-widget"></div>
+            </div>
+        </div>
+
+        <!-- JavaScript API Example -->
+        <div class="example">
+            <h3>🔧 Example 2: JavaScript API</h3>
+            <p>For more control and dynamic configuration:</p>
+            
+            <div class="code-block">
+&lt;div id="my-networking-widget"&gt;&lt;/div&gt;
+
+&lt;script src="https://your-domain.com/embed.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+// Initialize widget with custom configuration
+const widget = new ConnectSphereWidget('my-networking-widget', {
+    title: 'Corporate Networking Tool',
+    primaryColor: '#059669',
+    accentColor: '#047857',
+    compactMode: false,
+    showPoweredBy: false,
+    
+    // Event callbacks
+    onConnectionsFound: function(connections) {
+        console.log('Found connections:', connections);
+        // Custom analytics tracking
+        gtag('event', 'connections_found', {
+            'connections_count': connections.length
+        });
+    },
+    
+    onError: function(error) {
+        console.error('Widget error:', error);
+        // Custom error handling
+    }
+});
+
+// Update configuration dynamically
+widget.updateConfig({ 
+    primaryColor: '#dc2626',
+    title: 'Updated Title' 
+});
+&lt;/script&gt;
+            </div>
+
+            <div class="widget-demo">
+                <div id="example2-widget"></div>
+            </div>
+        </div>
+
+        <!-- Compact Mode Example -->
+        <div class="example">
+            <h3>📱 Example 3: Compact Mode</h3>
+            <p>Perfect for sidebars, mobile views, or space-constrained areas:</p>
+            
+            <div class="code-block">
+&lt;div data-connectsphere 
+     data-cs-compact-mode="true"
+     data-cs-title="Quick Connect"
+     data-cs-max-width="300px"
+     data-cs-show-logo="false"&gt;
+&lt;/div&gt;
+            </div>
+
+            <div class="widget-demo">
+                <div id="example3-widget"></div>
+            </div>
+        </div>
+
+        <!-- Event Handling -->
+        <div class="example">
+            <h3>📡 Event Handling</h3>
+            <p>Listen to widget events for custom integrations:</p>
+            
+            <div class="code-block">
+// Listen for custom events
+document.addEventListener('connectsphere:connections', function(event) {
+    const connections = event.detail.connections;
+    console.log('New connections found:', connections);
+    
+    // Example: Send to your analytics
+    analytics.track('Connections Found', {
+        count: connections.length,
+        targetCompany: connections[0]?.company
+    });
+});
+
+document.addEventListener('connectsphere:error', function(event) {
+    const error = event.detail.error;
+    console.error('ConnectSphere error:', error);
+    
+    // Example: Show custom error message
+    showNotification('Unable to find connections. Please try again.', 'error');
+});
+            </div>
+        </div>
+
+        <!-- Styling and Branding -->
+        <div class="example">
+            <h3>🎨 Custom Styling & Branding</h3>
+            <p>Match your brand perfectly:</p>
+            
+            <div class="code-block">
+&lt;!-- Corporate branding example --&gt;
+&lt;div data-connectsphere 
+     data-cs-title="TechCorp Alumni Network"
+     data-cs-subtitle="Connect with fellow TechCorp alumni"
+     data-cs-primary-color="#1a365d"
+     data-cs-accent-color="#2d3748"
+     data-cs-background-color="#f7fafc"
+     data-cs-border-radius="8px"
+     data-cs-show-powered-by="false"&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+/* Additional custom styling */
+#connectsphere-widget {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e2e8f0;
+}
+&lt;/style&gt;
+            </div>
+        </div>
+
+        <!-- Integration with Popular Platforms -->
+        <div class="example">
+            <h3>🔌 Platform Integration Examples</h3>
+            
+            <h4>WordPress</h4>
+            <div class="code-block">
+// Add to functions.php
+function add_connectsphere_widget() {
+    wp_enqueue_script('connectsphere', 'https://your-domain.com/embed.js');
+}
+add_action('wp_enqueue_scripts', 'add_connectsphere_widget');
+
+// Use in posts/pages
+[connectsphere title="Find Alumni" primary_color="#2563eb"]
+            </div>
+
+            <h4>Shopify</h4>
+            <div class="code-block">
+&lt;!-- Add to theme.liquid --&gt;
+&lt;script src="https://your-domain.com/embed.js"&gt;&lt;/script&gt;
+
+&lt;!-- Add to page template --&gt;
+&lt;div data-connectsphere 
+     data-cs-title="Connect with Industry Professionals"&gt;
+&lt;/div&gt;
+            </div>
+
+            <h4>React/Next.js</h4>
+            <div class="code-block">
+// React component
+import { useEffect } from 'react';
+
+function NetworkingWidget() {
+    useEffect(() => {
+        // Load script dynamically
+        const script = document.createElement('script');
+        script.src = 'https://your-domain.com/embed.js';
+        document.head.appendChild(script);
+        
+        return () => document.head.removeChild(script);
+    }, []);
+    
+    return (
+        &lt;div 
+            data-connectsphere
+            data-cs-title="Find Connections"
+            data-cs-primary-color="#3b82f6"
+        /&gt;
+    );
+}
+            </div>
+        </div>
+
+        <!-- Security and Privacy -->
+        <div class="example">
+            <h3>🔒 Security & Privacy</h3>
+            <ul>
+                <li><strong>Data Security:</strong> All API keys are processed server-side</li>
+                <li><strong>Privacy:</strong> No personal data is stored permanently</li>
+                <li><strong>GDPR Compliant:</strong> Built with privacy regulations in mind</li>
+                <li><strong>Iframe Isolation:</strong> Widget runs in isolated iframe for security</li>
+                <li><strong>CSP Compatible:</strong> Works with Content Security Policy</li>
+            </ul>
+        </div>
+
+        <!-- Support and Documentation -->
+        <div class="example">
+            <h3>📚 Support & Resources</h3>
+            <ul>
+                <li><a href="#api-docs">API Documentation</a></li>
+                <li><a href="#customization">Advanced Customization Guide</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+                <li><a href="mailto:support@connectsphere.com">Technical Support</a></li>
+                <li><a href="#github">GitHub Repository</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Demo initialization -->
+    <script>
+        // This would load the actual embed script
+        // For demo purposes, we'll show placeholder content
+        document.addEventListener('DOMContentLoaded', function() {
+            const demoWidgets = document.querySelectorAll('.widget-demo div[id*="example"]');
+            demoWidgets.forEach(widget => {
+                widget.innerHTML = `
+                    <div style="
+                        background: #f8fafc; 
+                        border: 2px solid #e2e8f0; 
+                        border-radius: 12px; 
+                        padding: 2rem; 
+                        text-align: center;
+                        color: #64748b;
+                        font-family: Inter, sans-serif;
+                    ">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #334155;">ConnectSphere Widget</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">
+                            Widget preview would appear here<br>
+                            <small>Add your API endpoint to see live demo</small>
+                        </p>
+                    </div>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>
