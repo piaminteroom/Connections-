@@ -34,15 +34,17 @@ const ConnectionFinder = () => {
       // Step 1: Google Search for LinkedIn profiles
       addLog('Searching for LinkedIn profiles at target company...', 'info');
       
-      const searchQuery = `site:linkedin.com/in/ "${formData.targetCompany}" "${formData.previousCompany}" "${formData.school}"`;
-      
       if (!process.env.REACT_APP_GOOGLE_SEARCH_API_KEY || !process.env.REACT_APP_GOOGLE_CSE_ID) {
         addLog('Google API keys not configured. Please set up your environment variables.', 'error');
         setLoading(false);
         return;
       }
 
-      const searchResponse = await fetch(`https://www.googleapis.com/customsearch/v1?key=${process.env.REACT_APP_GOOGLE_SEARCH_API_KEY}&cx=${process.env.REACT_APP_GOOGLE_CSE_ID}&q=${encodeURIComponent(searchQuery)}&num=10`);
+      // Search for people at target company first, then check for previous connections
+      const targetCompanyQuery = `site:linkedin.com/in/ "${formData.targetCompany}"`;
+      addLog('Searching for LinkedIn profiles at target company...', 'info');
+      
+      const searchResponse = await fetch(`https://www.googleapis.com/customsearch/v1?key=${process.env.REACT_APP_GOOGLE_SEARCH_API_KEY}&cx=${process.env.REACT_APP_GOOGLE_CSE_ID}&q=${encodeURIComponent(targetCompanyQuery)}&num=20`);
       
       if (!searchResponse.ok) {
         throw new Error(`Google Search API error: ${searchResponse.status}`);
@@ -51,27 +53,64 @@ const ConnectionFinder = () => {
       const searchData = await searchResponse.json();
       
       if (!searchData.items || searchData.items.length === 0) {
-        addLog('No LinkedIn profiles found. Try adjusting your search criteria.', 'warning');
+        addLog('No LinkedIn profiles found at target company. Try adjusting your search criteria.', 'warning');
         setLoading(false);
         return;
       }
 
-      addLog(`Found ${searchData.items.length} potential LinkedIn profiles`, 'success');
+      addLog(`Found ${searchData.items.length} profiles at target company`, 'success');
+      
+      // Filter profiles to find connections (work alumni or school alumni)
+      const filteredConnections = [];
+      
+      for (const item of searchData.items) {
+        const title = item.title || '';
+        const snippet = item.snippet || '';
+        const fullText = (title + ' ' + snippet).toLowerCase();
+        
+        let connectionType = null;
+        
+        // Check if this person has connection to previous company
+        if (fullText.includes(formData.previousCompany.toLowerCase())) {
+          connectionType = 'work alumni';
+        }
+        // Check if this person has connection to school
+        else if (fullText.includes(formData.school.toLowerCase())) {
+          connectionType = 'school alumni';
+        }
+        
+        // Only include if we found a connection
+        if (connectionType) {
+          filteredConnections.push({...item, connectionType});
+        }
+      }
+      
+      if (filteredConnections.length === 0) {
+        addLog('No connections found. Found people at target company but none from your previous workplace or school.', 'warning');
+        setLoading(false);
+        return;
+      }
+
+      addLog(`Found ${filteredConnections.length} connections from your network!`, 'success');
+      const allSearchResults = filteredConnections;
 
       // Step 2: Process each profile
       const processedConnections = [];
       
-      for (let i = 0; i < searchData.items.length; i++) {
-        const item = searchData.items[i];
-        addLog(`Processing profile ${i + 1}/${searchData.items.length}: ${item.title}`, 'info');
+      for (let i = 0; i < allSearchResults.length; i++) {
+        const item = allSearchResults[i];
+        addLog(`Processing ${item.connectionType} profile ${i + 1}/${allSearchResults.length}: ${item.title}`, 'info');
         
         // Extract profile information
         const profileUrl = item.link;
         const title = item.title || 'Unknown Title';
         const snippet = item.snippet || '';
         
-        // Generate email patterns
-        const emailPatterns = generateEmailPatterns(formData.yourName, formData.targetCompany);
+        // Extract name from LinkedIn profile title
+        const extractedName = extractNameFromProfile(title);
+        
+        // Generate email patterns using the connection's name
+        const emailPatterns = generateEmailPatterns(extractedName, formData.targetCompany);
         
         // Use OpenAI for connection analysis (if available)
         let connectionAnalysis = null;
@@ -107,8 +146,10 @@ const ConnectionFinder = () => {
           profileUrl,
           title,
           snippet,
+          extractedName,
           emailPatterns,
           connectionAnalysis,
+          connectionType: item.connectionType,
           discoveredAt: new Date().toISOString()
         };
 
@@ -130,10 +171,37 @@ const ConnectionFinder = () => {
     }
   };
 
+  const extractNameFromProfile = (profileTitle) => {
+    // LinkedIn profile titles usually start with the person's name
+    // Examples: "John Smith - Software Engineer at Google", "Jane Doe | Marketing Manager"
+    
+    // Remove common separators and extract the first part
+    const separators = [' - ', ' | ', ' at ', ' •'];
+    let name = profileTitle;
+    
+    for (const separator of separators) {
+      const index = name.indexOf(separator);
+      if (index !== -1) {
+        name = name.substring(0, index).trim();
+        break;
+      }
+    }
+    
+    // Clean up any remaining artifacts and return the name
+    name = name.replace(/[^\w\s]/g, '').trim();
+    
+    // If we couldn't extract a proper name, return a placeholder
+    if (!name || name.length < 2) {
+      return 'FirstName LastName';
+    }
+    
+    return name;
+  };
+
   const generateEmailPatterns = (name, company) => {
     const nameParts = name.toLowerCase().split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts[nameParts.length - 1];
+    const firstName = nameParts[0] || 'firstname';
+    const lastName = nameParts[nameParts.length - 1] || 'lastname';
     const companyDomain = company.toLowerCase().replace(/[^a-z0-9]/g, '');
     
     const patterns = [
@@ -252,7 +320,15 @@ const ConnectionFinder = () => {
                 {connections.map((connection) => (
                   <div key={connection.id} className="bg-slate-900/50 rounded-xl p-6 border border-slate-700/50">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-lg font-semibold text-white">{connection.title}</h3>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{connection.title}</h3>
+                        <p className="text-sm text-slate-400 mt-1">Extracted name: {connection.extractedName}</p>
+                        <span className={`inline-block mt-1 text-xs px-2 py-1 rounded ${
+                          connection.connectionType === 'work alumni' ? 'bg-blue-900/50 text-blue-300' : 'bg-green-900/50 text-green-300'
+                        }`}>
+                          {connection.connectionType}
+                        </span>
+                      </div>
                       <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">#{connection.id}</span>
                     </div>
                     
