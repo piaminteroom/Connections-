@@ -97,28 +97,27 @@ const ConnectionFinder = () => {
         const foundCompanyMatch = companyVariations.some(variation => fullText.includes(variation));
         const foundSchoolMatch = schoolVariations.some(variation => fullText.includes(variation));
         
+        // ONLY process profiles that have actual connections to previous company or school
+        let shouldProcessProfile = false;
+        
         if (foundCompanyMatch) {
           connectionType = 'work alumni';
           connectionStrength = 'high';
           connectionDetails = `Previously worked at ${formData.previousCompany}`;
           highPriorityCount++;
+          shouldProcessProfile = true;
           addLog(`  Found work alumni: ${formData.previousCompany} connection detected`, 'success');
         } else if (foundSchoolMatch) {
           connectionType = 'school alumni';
           connectionStrength = 'high';
           connectionDetails = `Graduated from ${formData.school}`;
           highPriorityCount++;
+          shouldProcessProfile = true;
           addLog(`  Found school alumni: ${formData.school} connection detected`, 'success');
         } else {
-          // Check for medium-priority role-based connections
-          const roleKeywords = ['engineer', 'developer', 'manager', 'director', 'lead', 'architect', 'product', 'design'];
-          const foundRole = roleKeywords.find(keyword => fullText.includes(keyword));
-          if (foundRole) {
-            connectionType = 'role-based connection';
-            connectionStrength = 'medium';
-            connectionDetails = `Role: ${foundRole}`;
-            mediumPriorityCount++;
-          }
+          // Skip profiles without connections to previous company or school
+          addLog(`  Skipping profile ${i + 1}: No connection to ${formData.previousCompany} or ${formData.school}`, 'info');
+          continue; // Skip this profile entirely
         }
         
         addLog(`Processing profile ${i + 1}/${searchData.items.length}: ${title} (${connectionType})`, 'info');
@@ -180,13 +179,15 @@ const ConnectionFinder = () => {
       }
       
       // Summary of findings
-      addLog(`🎯 Analysis complete! Found ${highPriorityCount} high-priority connections and ${mediumPriorityCount} medium-priority connections`, 'success');
-
-
+      addLog(`Analysis complete! Found ${highPriorityCount} work/school alumni connections from ${searchData.items.length} total profiles at ${formData.targetCompany}`, 'success');
+      
+      if (processedConnections.length === 0) {
+        addLog(`No connections found. Found ${searchData.items.length} people at ${formData.targetCompany} but none from ${formData.previousCompany} or ${formData.school}.`, 'warning');
+      }
 
       setConnections(processedConnections);
       setSearchComplete(true);
-      addLog(`Connection discovery complete! Found ${processedConnections.length} potential connections.`, 'success');
+      addLog(`Connection discovery complete! Found ${processedConnections.length} actual connections from your network.`, 'success');
       
     } catch (error) {
       addLog(`Error: ${error.message}`, 'error');
