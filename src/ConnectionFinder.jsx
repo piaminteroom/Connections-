@@ -129,33 +129,15 @@ const ConnectionFinder = () => {
         // Generate email patterns using the connection's name
         const emailPatterns = generateEmailPatterns(extractedName, formData.targetCompany);
         
-        // Use OpenAI for connection analysis (if available and high-priority)
-        let connectionAnalysis = null;
-        if (process.env.REACT_APP_OPENAI_API_KEY && connectionStrength === 'high') {
-          try {
-            const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`
-              },
-              body: JSON.stringify({
-                model: 'gpt-3.5-turbo',
-                messages: [{
-                  role: 'user',
-                  content: `Analyze this potential connection: ${title} at ${formData.targetCompany}. Previous company: ${formData.previousCompany}, School: ${formData.school}. Connection type: ${connectionType}. Provide: 1) Connection strength (1-10), 2) Outreach approach, 3) Common ground points, 4) Professional value. Keep it concise.`
-                }],
-                max_tokens: 200
-              })
-            });
-            
-            if (analysisResponse.ok) {
-              const analysisData = await analysisResponse.json();
-              connectionAnalysis = analysisData.choices[0].message.content;
-            }
-          } catch (error) {
-            addLog('OpenAI analysis failed, continuing without AI insights', 'warning');
-          }
+        // Automatically verify emails
+        addLog(`Automatically verifying emails for ${extractedName}...`, 'info');
+        let verificationResults = [];
+        try {
+          verificationResults = await verifyEmailsAutomatically(emailPatterns);
+          const validCount = verificationResults.filter(r => r.is_valid).length;
+          addLog(`Email verification complete: ${validCount}/${emailPatterns.length} valid emails found`, validCount > 0 ? 'success' : 'warning');
+        } catch (error) {
+          addLog(`Email verification failed for ${extractedName}: ${error.message}`, 'warning');
         }
 
         const connection = {
@@ -163,8 +145,9 @@ const ConnectionFinder = () => {
           profileUrl,
           title,
           snippet,
+          extractedName,
           emailPatterns,
-          connectionAnalysis,
+          verificationResults,
           connectionType,
           connectionStrength,
           connectionDetails,
@@ -193,6 +176,64 @@ const ConnectionFinder = () => {
       addLog(`Error: ${error.message}`, 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const verifyEmailsAutomatically = async (emailPatterns) => {
+    if (!emailPatterns || emailPatterns.length === 0) {
+      return [];
+    }
+
+    try {
+      // Add rate limiting - wait between requests
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Use batch verification if available
+      if (emailPatterns.length > 1) {
+        const response = await fetch('https://rapid-email-verifier.fly.dev/validate/batch', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ emails: emailPatterns })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const results = await response.json();
+        return results.map((result, index) => ({
+          email: emailPatterns[index],
+          ...result,
+          verified: true
+        }));
+      } else {
+        // Single email verification
+        const response = await fetch(`https://rapid-email-verifier.fly.dev/validate?email=${encodeURIComponent(emailPatterns[0])}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        return [{
+          email: emailPatterns[0],
+          ...result,
+          verified: true
+        }];
+      }
+    } catch (error) {
+      // Return failed verification results
+      return emailPatterns.map(email => ({
+        email,
+        is_valid: false,
+        is_disposable: false,
+        has_mx_record: false,
+        suggestion: '',
+        verified: false,
+        error: error.message
+      }));
     }
   };
 
@@ -383,36 +424,19 @@ const ConnectionFinder = () => {
             <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-green-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Found Connections ({connections.length})</h2>
-                <button
-                  onClick={async () => {
-                    addLog('Starting bulk email verification for all connections...', 'info');
-                    for (const connection of connections) {
-                      if (connection.emailPatterns && connection.emailPatterns.length > 0) {
-                        addLog(`Verifying emails for ${extractNameFromProfile(connection.title)}...`, 'info');
-                        // Trigger verification for each connection
-                        const event = new CustomEvent('verifyEmails', { 
-                          detail: { connectionId: connection.id } 
-                        });
-                        window.dispatchEvent(event);
-                        await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limiting
-                      }
-                    }
-                    addLog('Bulk verification initiated for all connections', 'success');
-                  }}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
-                >
-                  🔍 Verify All Emails
-                </button>
               </div>
               
-                             <div className="space-y-6">
-                 {connections
-                   .sort((a, b) => {
-                     // Sort by priority: high > medium > low
-                     const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
-                     return priorityOrder[b.connectionStrength] - priorityOrder[a.connectionStrength];
-                   })
-                   .map((connection) => (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Work Alumni Column */}
+                <div>
+                  <h3 className="text-xl font-semibold text-blue-300 mb-4 flex items-center">
+                    <span className="w-4 h-4 bg-blue-500 rounded-full mr-3"></span>
+                    Work Alumni ({connections.filter(conn => conn.connectionType === 'work alumni').length})
+                  </h3>
+                  <div className="space-y-4">
+                    {connections
+                      .filter(connection => connection.connectionType === 'work alumni')
+                      .map((connection) => (
                    <div key={connection.id} className={`bg-slate-900/50 rounded-xl p-6 border ${
                      connection.connectionStrength === 'high' ? 'border-blue-500/50' :
                      connection.connectionStrength === 'medium' ? 'border-yellow-500/50' :
@@ -480,7 +504,7 @@ const ConnectionFinder = () => {
                     
                     {connection.verificationResults && connection.verificationResults.length > 0 && (
                       <div className="bg-green-900/20 rounded-lg p-4 border border-green-700/30 mb-4">
-                        <h4 className="text-sm font-medium text-green-400 mb-2">✅ Best Email Option</h4>
+                        <h4 className="text-sm font-medium text-green-400 mb-2">Best Email Option</h4>
                         {(() => {
                           const bestEmail = connection.verificationResults.find(r => r.is_valid && !r.is_disposable)?.email || 
                                            connection.verificationResults.find(r => r.is_valid)?.email;
@@ -507,20 +531,105 @@ const ConnectionFinder = () => {
                       </div>
                     )}
                     
-                    {connection.connectionAnalysis && (
-                      <div className="bg-slate-800/50 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-slate-400 mb-2">AI Connection Analysis</h4>
-                        <p className="text-slate-300 text-sm">{connection.connectionAnalysis}</p>
-                      </div>
-                    )}
                   </div>
-                ))}
+                      ))}
+                      {connections.filter(conn => conn.connectionType === 'work alumni').length === 0 && (
+                        <div className="text-center py-8 text-slate-400">
+                          <p>No work alumni found</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* School Alumni Column */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-green-300 mb-4 flex items-center">
+                      <span className="w-4 h-4 bg-green-500 rounded-full mr-3"></span>
+                      School Alumni ({connections.filter(conn => conn.connectionType === 'school alumni').length})
+                    </h3>
+                    <div className="space-y-4">
+                      {connections
+                        .filter(connection => connection.connectionType === 'school alumni')
+                        .map((connection) => (
+                          <div key={connection.id} className="bg-slate-900/50 rounded-xl p-6 border border-green-500/50">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-semibold text-white">{connection.title}</h3>
+                                {connection.connectionDetails && (
+                                  <p className="text-sm text-slate-300 mt-1">{connection.connectionDetails}</p>
+                                )}
+                                <div className="flex items-center space-x-2 mt-2">
+                                  <span className="inline-block text-xs px-3 py-1 rounded-full font-medium bg-green-900/50 text-green-300 border border-green-700/50">
+                                    {connection.connectionType.replace('-', ' ').toUpperCase()}
+                                  </span>
+                                  <span className="inline-block text-xs px-2 py-1 rounded-full font-medium bg-green-900/50 text-green-300 border border-green-700/50">
+                                    {connection.connectionStrength.toUpperCase()}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded ml-4">#{connection.id}</span>
+                            </div>
+                           
+                           <p className="text-slate-300 mb-4">{connection.snippet}</p>
+                           
+                           <div className="space-y-4">
+                             <div>
+                               <h4 className="text-sm font-medium text-slate-400 mb-2">Profile Link</h4>
+                               <a
+                                 href={connection.profileUrl}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 className="inline-block px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded transition-colors"
+                               >
+                                 View LinkedIn Profile
+                               </a>
+                             </div>
+                             
+                             {connection.verificationResults && connection.verificationResults.length > 0 && (
+                               <div className="bg-green-900/20 rounded-lg p-4 border border-green-700/30">
+                                 <h4 className="text-sm font-medium text-green-400 mb-2">Best Email Option</h4>
+                                 {(() => {
+                                   const bestEmail = connection.verificationResults.find(r => r.is_valid && !r.is_disposable)?.email || 
+                                                    connection.verificationResults.find(r => r.is_valid)?.email;
+                                   if (bestEmail) {
+                                     return (
+                                       <div className="flex items-center space-x-2">
+                                         <input
+                                           type="text"
+                                           value={bestEmail}
+                                           readOnly
+                                           className="flex-1 px-3 py-2 bg-green-900/50 border border-green-700/50 rounded text-white text-sm font-mono"
+                                         />
+                                         <button
+                                           onClick={() => copyToClipboard(bestEmail)}
+                                           className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
+                                         >
+                                           Copy
+                                         </button>
+                                       </div>
+                                     );
+                                   }
+                                   return <p className="text-green-300 text-sm">No valid emails found</p>;
+                                 })()}
+                               </div>
+                             )}
+                           </div>
+                          </div>
+                        ))}
+                        {connections.filter(conn => conn.connectionType === 'school alumni').length === 0 && (
+                          <div className="text-center py-8 text-slate-400">
+                            <p>No school alumni found</p>
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Verification Summary */}
                 {connections.some(conn => conn.verificationResults) && (
                   <div className="mt-6 p-4 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-lg border border-green-700/30">
                     <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-lg font-semibold text-green-400">📊 Email Verification Summary</h3>
+                      <h3 className="text-lg font-semibold text-green-400">Email Verification Summary</h3>
                       <button
                         onClick={() => {
                           const validEmails = connections
@@ -553,7 +662,7 @@ const ConnectionFinder = () => {
                         }}
                         className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
                       >
-                        📥 Export Valid Emails
+                        Export Valid Emails
                       </button>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
