@@ -68,6 +68,12 @@ const ConnectionFinder = () => {
       // Step 2: Efficiently analyze each profile for connections
       addLog('🔗 Analyzing profiles for workplace and school connections...', 'info');
       
+      // Debug: Show what we're looking for
+      const debugCompanyVariations = generateNameVariations(formData.previousCompany);
+      const debugSchoolVariations = generateNameVariations(formData.school);
+      addLog(`Looking for company variations: ${debugCompanyVariations.join(', ')}`, 'info');
+      addLog(`Looking for school variations: ${debugSchoolVariations.join(', ')}`, 'info');
+      
       const processedConnections = [];
       let highPriorityCount = 0;
       let mediumPriorityCount = 0;
@@ -78,22 +84,31 @@ const ConnectionFinder = () => {
         const snippet = item.snippet || '';
         const fullText = (title + ' ' + snippet).toLowerCase();
         
-        // Efficient connection detection
+        // Efficient connection detection with improved matching
         let connectionType = 'potential connection';
         let connectionStrength = 'low';
         let connectionDetails = '';
         
+        // Create variations of company and school names for better matching
+        const companyVariations = generateNameVariations(formData.previousCompany);
+        const schoolVariations = generateNameVariations(formData.school);
+        
         // Check for high-priority connections first
-        if (fullText.includes(formData.previousCompany.toLowerCase())) {
+        const foundCompanyMatch = companyVariations.some(variation => fullText.includes(variation));
+        const foundSchoolMatch = schoolVariations.some(variation => fullText.includes(variation));
+        
+        if (foundCompanyMatch) {
           connectionType = 'work alumni';
           connectionStrength = 'high';
           connectionDetails = `Previously worked at ${formData.previousCompany}`;
           highPriorityCount++;
-        } else if (fullText.includes(formData.school.toLowerCase())) {
+          addLog(`  Found work alumni: ${formData.previousCompany} connection detected`, 'success');
+        } else if (foundSchoolMatch) {
           connectionType = 'school alumni';
           connectionStrength = 'high';
           connectionDetails = `Graduated from ${formData.school}`;
           highPriorityCount++;
+          addLog(`  Found school alumni: ${formData.school} connection detected`, 'success');
         } else {
           // Check for medium-priority role-based connections
           const roleKeywords = ['engineer', 'developer', 'manager', 'director', 'lead', 'architect', 'product', 'design'];
@@ -178,6 +193,48 @@ const ConnectionFinder = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateNameVariations = (name) => {
+    if (!name) return [];
+    
+    const variations = [];
+    const cleanName = name.toLowerCase().trim();
+    
+    // Add the original name
+    variations.push(cleanName);
+    
+    // Add common abbreviations and variations
+    // Remove common company suffixes
+    const suffixesToRemove = [' inc', ' inc.', ' corporation', ' corp', ' corp.', ' company', ' co', ' co.', ' ltd', ' ltd.', ' llc', ' university', ' college', ' school', ' institute'];
+    let shortName = cleanName;
+    
+    for (const suffix of suffixesToRemove) {
+      if (shortName.endsWith(suffix)) {
+        shortName = shortName.replace(suffix, '').trim();
+        variations.push(shortName);
+        break;
+      }
+    }
+    
+    // Add acronyms for multi-word names
+    const words = cleanName.split(' ').filter(word => word.length > 0);
+    if (words.length > 1) {
+      const acronym = words.map(word => word[0]).join('');
+      if (acronym.length >= 2) {
+        variations.push(acronym);
+      }
+    }
+    
+    // Add partial matches for long names
+    if (words.length > 2) {
+      // First two words
+      variations.push(words.slice(0, 2).join(' '));
+      // Last two words  
+      variations.push(words.slice(-2).join(' '));
+    }
+    
+    return [...new Set(variations)]; // Remove duplicates
   };
 
   const extractNameFromProfile = (profileTitle) => {
