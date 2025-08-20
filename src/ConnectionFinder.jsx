@@ -44,10 +44,15 @@ const ConnectionFinder = () => {
       const targetCompanyQuery = `site:linkedin.com/in/ "${formData.targetCompany}"`;
       addLog('Searching for LinkedIn profiles at target company...', 'info');
       
-      const searchResponse = await fetch(`https://www.googleapis.com/customsearch/v1?key=${process.env.REACT_APP_GOOGLE_SEARCH_API_KEY}&cx=${process.env.REACT_APP_GOOGLE_CSE_ID}&q=${encodeURIComponent(targetCompanyQuery)}&num=20`);
+      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${process.env.REACT_APP_GOOGLE_SEARCH_API_KEY}&cx=${process.env.REACT_APP_GOOGLE_CSE_ID}&q=${encodeURIComponent(targetCompanyQuery)}&num=10`;
+      addLog(`Search query: ${targetCompanyQuery}`, 'info');
+      
+      const searchResponse = await fetch(searchUrl);
       
       if (!searchResponse.ok) {
-        throw new Error(`Google Search API error: ${searchResponse.status}`);
+        const errorText = await searchResponse.text();
+        addLog(`Google Search API error ${searchResponse.status}: ${errorText}`, 'error');
+        throw new Error(`Google Search API error: ${searchResponse.status} - ${errorText}`);
       }
 
       const searchData = await searchResponse.json();
@@ -176,7 +181,7 @@ const ConnectionFinder = () => {
     // Examples: "John Smith - Software Engineer at Google", "Jane Doe | Marketing Manager"
     
     // Remove common separators and extract the first part
-    const separators = [' - ', ' | ', ' at ', ' •'];
+    const separators = [' - ', ' | ', ' at ', ' • '];
     let name = profileTitle;
     
     for (const separator of separators) {
@@ -236,13 +241,13 @@ const ConnectionFinder = () => {
           </p>
           <div className="flex justify-center mt-6 space-x-6">
             <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 backdrop-blur-sm rounded-full px-6 py-2 border border-cyan-500/30">
-              <span className="text-cyan-400 font-semibold">🎯 Smart Targeting</span>
+              <span className="text-cyan-400 font-semibold">Smart Targeting</span>
             </div>
             <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-sm rounded-full px-6 py-2 border border-purple-500/30">
-              <span className="text-purple-400 font-semibold">🔍 Multi-Platform</span>
+              <span className="text-purple-400 font-semibold">Multi-Platform</span>
             </div>
             <div className="bg-gradient-to-r from-pink-500/10 to-cyan-500/10 backdrop-blur-sm rounded-full px-6 py-2 border border-pink-500/30">
-              <span className="text-pink-400 font-semibold">📧 Email Patterns</span>
+              <span className="text-pink-400 font-semibold">Email Patterns</span>
             </div>
           </div>
         </div>
@@ -251,7 +256,7 @@ const ConnectionFinder = () => {
         <div className="relative mb-12">
           <div className="absolute inset-0 bg-gradient-to-r from-slate-800/50 to-purple-800/30 rounded-2xl blur-xl"></div>
           <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-purple-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">🔍 Find Professional Connections</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Find Professional Connections</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
@@ -304,7 +309,7 @@ const ConnectionFinder = () => {
               disabled={loading}
               className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 disabled:from-slate-600 disabled:to-slate-600 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none disabled:cursor-not-allowed"
             >
-              {loading ? '🔍 Discovering Connections...' : '🚀 Start Real-Time Discovery'}
+              {loading ? 'Discovering Connections...' : 'Start Real-Time Discovery'}
             </button>
           </div>
         </div>
@@ -314,7 +319,7 @@ const ConnectionFinder = () => {
           <div className="relative mb-12">
             <div className="absolute inset-0 bg-gradient-to-r from-green-800/20 to-blue-800/20 rounded-2xl blur-xl"></div>
             <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-green-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
-              <h2 className="text-2xl font-bold text-white mb-6">🎯 Found Connections ({connections.length})</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Found Connections ({connections.length})</h2>
               
               <div className="space-y-6">
                 {connections.map((connection) => (
@@ -336,7 +341,7 @@ const ConnectionFinder = () => {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
-                        <h4 className="text-sm font-medium text-slate-400 mb-2">📧 Email Patterns</h4>
+                        <h4 className="text-sm font-medium text-slate-400 mb-2">Email Patterns</h4>
                         <div className="space-y-2">
                           {connection.emailPatterns.map((email, index) => (
                             <div key={index} className="flex items-center space-x-2">
@@ -358,7 +363,7 @@ const ConnectionFinder = () => {
                       </div>
                       
                       <div>
-                        <h4 className="text-sm font-medium text-slate-400 mb-2">🔗 Profile Link</h4>
+                        <h4 className="text-sm font-medium text-slate-400 mb-2">Profile Link</h4>
                         <a
                           href={connection.profileUrl}
                           target="_blank"
@@ -372,7 +377,7 @@ const ConnectionFinder = () => {
                     
                     {connection.connectionAnalysis && (
                       <div className="bg-slate-800/50 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-slate-400 mb-2">🤖 AI Connection Analysis</h4>
+                        <h4 className="text-sm font-medium text-slate-400 mb-2">AI Connection Analysis</h4>
                         <p className="text-slate-300 text-sm">{connection.connectionAnalysis}</p>
                       </div>
                     )}
@@ -388,7 +393,7 @@ const ConnectionFinder = () => {
           <div className="relative mb-12">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-800/20 to-purple-800/20 rounded-2xl blur-xl"></div>
             <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-blue-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
-              <h2 className="text-2xl font-bold text-white mb-6">📋 Discovery Logs</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Discovery Logs</h2>
               
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {logs.map((log, index) => (
@@ -416,7 +421,7 @@ const ConnectionFinder = () => {
         {/* Environment Info */}
         <div className="bg-slate-800/50 rounded-lg p-4 text-sm text-slate-300">
           <p>Environment: {process.env.NODE_ENV}</p>
-          <p>API Keys: OpenAI {process.env.REACT_APP_OPENAI_API_KEY ? '✅' : '❌'}, Google {process.env.REACT_APP_GOOGLE_SEARCH_API_KEY ? '✅' : '❌'}</p>
+          <p>API Keys: OpenAI {process.env.REACT_APP_OPENAI_API_KEY ? 'YES' : 'NO'}, Google {process.env.REACT_APP_GOOGLE_SEARCH_API_KEY ? 'YES' : 'NO'}</p>
           <p>Component State: {JSON.stringify({loading, searchComplete, connections: connections.length})}</p>
         </div>
       </div>
