@@ -40,87 +40,86 @@ const ConnectionFinder = () => {
         return;
       }
 
-      // Step 1: Find people at target company using Google Search
-      const targetCompanyQuery = `site:linkedin.com/in/ "${formData.targetCompany}"`;
-      addLog('🔍 Searching for LinkedIn profiles at target company...', 'info');
+      // Step 1: Search for specific connections using targeted queries
+      addLog('Searching for LinkedIn connections using targeted queries...', 'info');
       
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${process.env.REACT_APP_GOOGLE_SEARCH_API_KEY}&cx=${process.env.REACT_APP_GOOGLE_CSE_ID}&q=${encodeURIComponent(targetCompanyQuery)}&num=10`;
-      addLog(`Search query: ${targetCompanyQuery}`, 'info');
-      
-      const searchResponse = await fetch(searchUrl);
-      
-      if (!searchResponse.ok) {
-        const errorText = await searchResponse.text();
-        addLog(`Google Search API error ${searchResponse.status}: ${errorText}`, 'error');
-        throw new Error(`Google Search API error: ${searchResponse.status} - ${errorText}`);
-      }
+      // Create targeted search queries
+      const searchQueries = [
+        {
+          name: 'work alumni',
+          query: `site:linkedin.com/in/ "${formData.targetCompany}" "${formData.previousCompany}"`,
+          description: `People who worked at ${formData.previousCompany} and now work at ${formData.targetCompany}`
+        },
+        {
+          name: 'school alumni', 
+          query: `site:linkedin.com/in/ "${formData.targetCompany}" "${formData.school}"`,
+          description: `People who went to ${formData.school} and now work at ${formData.targetCompany}`
+        }
+      ];
 
-      const searchData = await searchResponse.json();
+      let allSearchResults = [];
       
-      if (!searchData.items || searchData.items.length === 0) {
-        addLog('No LinkedIn profiles found at target company. Try adjusting your search criteria.', 'warning');
+      for (const searchType of searchQueries) {
+        addLog(`Searching for ${searchType.name}: ${searchType.description}`, 'info');
+        addLog(`Search query: ${searchType.query}`, 'info');
+        
+        const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${process.env.REACT_APP_GOOGLE_SEARCH_API_KEY}&cx=${process.env.REACT_APP_GOOGLE_CSE_ID}&q=${encodeURIComponent(searchType.query)}&num=10`;
+        
+        const searchResponse = await fetch(searchUrl);
+        
+        if (!searchResponse.ok) {
+          const errorText = await searchResponse.text();
+          addLog(`Google Search API error for ${searchType.name}: ${searchResponse.status} - ${errorText}`, 'warning');
+          continue;
+        }
+
+        const searchData = await searchResponse.json();
+        
+        if (searchData.items && searchData.items.length > 0) {
+          addLog(`Found ${searchData.items.length} ${searchType.name} profiles`, 'success');
+          allSearchResults.push(...searchData.items.map(item => ({...item, connectionType: searchType.name})));
+        } else {
+          addLog(`No ${searchType.name} profiles found`, 'warning');
+        }
+        
+        // Small delay between searches to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      if (allSearchResults.length === 0) {
+        addLog(`No connections found. Try different search terms or check if people from ${formData.previousCompany} or ${formData.school} work at ${formData.targetCompany}.`, 'warning');
         setLoading(false);
         return;
       }
 
-      addLog(`✅ Found ${searchData.items.length} profiles at ${formData.targetCompany}`, 'success');
+      addLog(`Found ${allSearchResults.length} total connection profiles!`, 'success');
       
-      // Step 2: Efficiently analyze each profile for connections
-      addLog('🔗 Analyzing profiles for workplace and school connections...', 'info');
-      
-      // Debug: Show what we're looking for
-      const debugCompanyVariations = generateNameVariations(formData.previousCompany);
-      const debugSchoolVariations = generateNameVariations(formData.school);
-      addLog(`Looking for company variations: ${debugCompanyVariations.join(', ')}`, 'info');
-      addLog(`Looking for school variations: ${debugSchoolVariations.join(', ')}`, 'info');
+      // Step 2: Process the targeted connection results
+      addLog('Processing targeted connection results...', 'info');
       
       const processedConnections = [];
-      let highPriorityCount = 0;
-      let mediumPriorityCount = 0;
+      let workAlumniCount = 0;
+      let schoolAlumniCount = 0;
       
-      for (let i = 0; i < searchData.items.length; i++) {
-        const item = searchData.items[i];
+      for (let i = 0; i < allSearchResults.length; i++) {
+        const item = allSearchResults[i];
         const title = item.title || '';
         const snippet = item.snippet || '';
-        const fullText = (title + ' ' + snippet).toLowerCase();
         
-        // Efficient connection detection with improved matching
-        let connectionType = 'potential connection';
-        let connectionStrength = 'low';
+        // Since these are targeted results, we already know the connection type
+        const connectionType = item.connectionType;
+        const connectionStrength = 'high';
         let connectionDetails = '';
         
-        // Create variations of company and school names for better matching
-        const companyVariations = generateNameVariations(formData.previousCompany);
-        const schoolVariations = generateNameVariations(formData.school);
-        
-        // Check for high-priority connections first
-        const foundCompanyMatch = companyVariations.some(variation => fullText.includes(variation));
-        const foundSchoolMatch = schoolVariations.some(variation => fullText.includes(variation));
-        
-        // ONLY process profiles that have actual connections to previous company or school
-        let shouldProcessProfile = false;
-        
-        if (foundCompanyMatch) {
-          connectionType = 'work alumni';
-          connectionStrength = 'high';
+        if (connectionType === 'work alumni') {
           connectionDetails = `Previously worked at ${formData.previousCompany}`;
-          highPriorityCount++;
-          shouldProcessProfile = true;
-          addLog(`  Found work alumni: ${formData.previousCompany} connection detected`, 'success');
-        } else if (foundSchoolMatch) {
-          connectionType = 'school alumni';
-          connectionStrength = 'high';
+          workAlumniCount++;
+        } else if (connectionType === 'school alumni') {
           connectionDetails = `Graduated from ${formData.school}`;
-          highPriorityCount++;
-          shouldProcessProfile = true;
-          addLog(`  Found school alumni: ${formData.school} connection detected`, 'success');
-        } else {
-          // Skip profiles without connections to previous company or school
-          addLog(`  Skipping profile ${i + 1}: No connection to ${formData.previousCompany} or ${formData.school}`, 'info');
-          continue; // Skip this profile entirely
+          schoolAlumniCount++;
         }
         
-        addLog(`Processing profile ${i + 1}/${searchData.items.length}: ${title} (${connectionType})`, 'info');
+        addLog(`Processing ${connectionType} profile ${i + 1}/${allSearchResults.length}: ${title}`, 'info');
         
         // Extract profile information
         const profileUrl = item.link;
@@ -179,15 +178,15 @@ const ConnectionFinder = () => {
       }
       
       // Summary of findings
-      addLog(`Analysis complete! Found ${highPriorityCount} work/school alumni connections from ${searchData.items.length} total profiles at ${formData.targetCompany}`, 'success');
+      addLog(`Analysis complete! Found ${workAlumniCount} work alumni and ${schoolAlumniCount} school alumni connections at ${formData.targetCompany}`, 'success');
       
       if (processedConnections.length === 0) {
-        addLog(`No connections found. Found ${searchData.items.length} people at ${formData.targetCompany} but none from ${formData.previousCompany} or ${formData.school}.`, 'warning');
+        addLog(`No connections found using targeted search. Try different search terms or variations of company/school names.`, 'warning');
       }
 
       setConnections(processedConnections);
       setSearchComplete(true);
-      addLog(`Connection discovery complete! Found ${processedConnections.length} actual connections from your network.`, 'success');
+      addLog(`Connection discovery complete! Found ${processedConnections.length} targeted connections from your network.`, 'success');
       
     } catch (error) {
       addLog(`Error: ${error.message}`, 'error');
