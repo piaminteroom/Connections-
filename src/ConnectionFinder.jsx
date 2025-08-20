@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import EmailVerifier from './EmailVerifier';
 
 const ConnectionFinder = () => {
   const [formData, setFormData] = useState({
@@ -380,7 +381,29 @@ const ConnectionFinder = () => {
           <div className="relative mb-12">
             <div className="absolute inset-0 bg-gradient-to-r from-green-800/20 to-blue-800/20 rounded-2xl blur-xl"></div>
             <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-green-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
-              <h2 className="text-2xl font-bold text-white mb-6">Found Connections ({connections.length})</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Found Connections ({connections.length})</h2>
+                <button
+                  onClick={async () => {
+                    addLog('Starting bulk email verification for all connections...', 'info');
+                    for (const connection of connections) {
+                      if (connection.emailPatterns && connection.emailPatterns.length > 0) {
+                        addLog(`Verifying emails for ${extractNameFromProfile(connection.title)}...`, 'info');
+                        // Trigger verification for each connection
+                        const event = new CustomEvent('verifyEmails', { 
+                          detail: { connectionId: connection.id } 
+                        });
+                        window.dispatchEvent(event);
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limiting
+                      }
+                    }
+                    addLog('Bulk verification initiated for all connections', 'success');
+                  }}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
+                >
+                  🔍 Verify All Emails
+                </button>
+              </div>
               
                              <div className="space-y-6">
                  {connections
@@ -426,25 +449,20 @@ const ConnectionFinder = () => {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
-                        <h4 className="text-sm font-medium text-slate-400 mb-2">Email Patterns</h4>
-                        <div className="space-y-2">
-                          {connection.emailPatterns.map((email, index) => (
-                            <div key={index} className="flex items-center space-x-2">
-                              <input
-                                type="text"
-                                value={email}
-                                readOnly
-                                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white text-sm"
-                              />
-                              <button
-                                onClick={() => copyToClipboard(email)}
-                                className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm rounded transition-colors"
-                              >
-                                Copy
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                        <EmailVerifier 
+                          emailPatterns={connection.emailPatterns}
+                          connectionName={extractNameFromProfile(connection.title)}
+                          connectionId={connection.id}
+                          onVerificationComplete={(results) => {
+                            // Update connection with verification results
+                            const updatedConnections = connections.map(conn => 
+                              conn.id === connection.id 
+                                ? { ...conn, verificationResults: results }
+                                : conn
+                            );
+                            setConnections(updatedConnections);
+                          }}
+                        />
                       </div>
                       
                       <div>
@@ -460,6 +478,35 @@ const ConnectionFinder = () => {
                       </div>
                     </div>
                     
+                    {connection.verificationResults && connection.verificationResults.length > 0 && (
+                      <div className="bg-green-900/20 rounded-lg p-4 border border-green-700/30 mb-4">
+                        <h4 className="text-sm font-medium text-green-400 mb-2">✅ Best Email Option</h4>
+                        {(() => {
+                          const bestEmail = connection.verificationResults.find(r => r.is_valid && !r.is_disposable)?.email || 
+                                           connection.verificationResults.find(r => r.is_valid)?.email;
+                          if (bestEmail) {
+                            return (
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="text"
+                                  value={bestEmail}
+                                  readOnly
+                                  className="flex-1 px-3 py-2 bg-green-900/50 border border-green-700/50 rounded text-white text-sm font-mono"
+                                />
+                                <button
+                                  onClick={() => copyToClipboard(bestEmail)}
+                                  className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
+                                >
+                                  Copy
+                                </button>
+                              </div>
+                            );
+                          }
+                          return <p className="text-green-300 text-sm">No valid emails found</p>;
+                        })()}
+                      </div>
+                    )}
+                    
                     {connection.connectionAnalysis && (
                       <div className="bg-slate-800/50 rounded-lg p-4">
                         <h4 className="text-sm font-medium text-slate-400 mb-2">AI Connection Analysis</h4>
@@ -468,6 +515,81 @@ const ConnectionFinder = () => {
                     )}
                   </div>
                 ))}
+                
+                {/* Verification Summary */}
+                {connections.some(conn => conn.verificationResults) && (
+                  <div className="mt-6 p-4 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-lg border border-green-700/30">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-lg font-semibold text-green-400">📊 Email Verification Summary</h3>
+                      <button
+                        onClick={() => {
+                          const validEmails = connections
+                            .filter(conn => conn.verificationResults?.some(r => r.is_valid))
+                            .map(conn => {
+                              const bestEmail = conn.verificationResults.find(r => r.is_valid && !r.is_disposable)?.email || 
+                                               conn.verificationResults.find(r => r.is_valid)?.email;
+                              return {
+                                name: extractNameFromProfile(conn.title),
+                                email: bestEmail,
+                                connectionType: conn.connectionType,
+                                company: formData.targetCompany
+                              };
+                            })
+                            .filter(item => item.email);
+                          
+                          const csvContent = [
+                            'Name,Email,Connection Type,Company',
+                            ...validEmails.map(item => `"${item.name}","${item.email}","${item.connectionType}","${item.company}"`)
+                          ].join('\n');
+                          
+                          const blob = new Blob([csvContent], { type: 'text/csv' });
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `verified_emails_${formData.targetCompany}_${new Date().toISOString().split('T')[0]}.csv`;
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                          addLog(`Exported ${validEmails.length} verified emails to CSV`, 'success');
+                        }}
+                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+                      >
+                        📥 Export Valid Emails
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-400">
+                          {connections.filter(conn => conn.verificationResults?.some(r => r.is_valid)).length}
+                        </div>
+                        <div className="text-slate-300">Connections with Valid Emails</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-400">
+                          {connections.reduce((total, conn) => 
+                            total + (conn.verificationResults?.filter(r => r.is_valid).length || 0), 0
+                          )}
+                        </div>
+                        <div className="text-slate-300">Total Valid Emails</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-yellow-400">
+                          {connections.reduce((total, conn) => 
+                            total + (conn.verificationResults?.filter(r => r.is_disposable).length || 0), 0
+                          )}
+                        </div>
+                        <div className="text-slate-300">Disposable Emails</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-400">
+                          {connections.reduce((total, conn) => 
+                            total + (conn.verificationResults?.length || 0), 0
+                          )}
+                        </div>
+                        <div className="text-slate-300">Total Verified</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
