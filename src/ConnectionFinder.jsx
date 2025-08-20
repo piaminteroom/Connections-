@@ -40,9 +40,9 @@ const ConnectionFinder = () => {
         return;
       }
 
-      // Search for people at target company first, then check for previous connections
+      // Step 1: Find people at target company using Google Search
       const targetCompanyQuery = `site:linkedin.com/in/ "${formData.targetCompany}"`;
-      addLog('Searching for LinkedIn profiles at target company...', 'info');
+      addLog('🔍 Searching for LinkedIn profiles at target company...', 'info');
       
       const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${process.env.REACT_APP_GOOGLE_SEARCH_API_KEY}&cx=${process.env.REACT_APP_GOOGLE_CSE_ID}&q=${encodeURIComponent(targetCompanyQuery)}&num=10`;
       addLog(`Search query: ${targetCompanyQuery}`, 'info');
@@ -63,63 +63,61 @@ const ConnectionFinder = () => {
         return;
       }
 
-      addLog(`Found ${searchData.items.length} profiles at target company`, 'success');
+      addLog(`✅ Found ${searchData.items.length} profiles at ${formData.targetCompany}`, 'success');
       
-      // Filter profiles to find connections (work alumni or school alumni)
-      const filteredConnections = [];
+      // Step 2: Efficiently analyze each profile for connections
+      addLog('🔗 Analyzing profiles for workplace and school connections...', 'info');
       
-      for (const item of searchData.items) {
+      const processedConnections = [];
+      let highPriorityCount = 0;
+      let mediumPriorityCount = 0;
+      
+      for (let i = 0; i < searchData.items.length; i++) {
+        const item = searchData.items[i];
         const title = item.title || '';
         const snippet = item.snippet || '';
         const fullText = (title + ' ' + snippet).toLowerCase();
         
-        let connectionType = null;
+        // Efficient connection detection
+        let connectionType = 'potential connection';
+        let connectionStrength = 'low';
+        let connectionDetails = '';
         
-        // Check if this person has connection to previous company
+        // Check for high-priority connections first
         if (fullText.includes(formData.previousCompany.toLowerCase())) {
           connectionType = 'work alumni';
-        }
-        // Check if this person has connection to school
-        else if (fullText.includes(formData.school.toLowerCase())) {
+          connectionStrength = 'high';
+          connectionDetails = `Previously worked at ${formData.previousCompany}`;
+          highPriorityCount++;
+        } else if (fullText.includes(formData.school.toLowerCase())) {
           connectionType = 'school alumni';
+          connectionStrength = 'high';
+          connectionDetails = `Graduated from ${formData.school}`;
+          highPriorityCount++;
+        } else {
+          // Check for medium-priority role-based connections
+          const roleKeywords = ['engineer', 'developer', 'manager', 'director', 'lead', 'architect', 'product', 'design'];
+          const foundRole = roleKeywords.find(keyword => fullText.includes(keyword));
+          if (foundRole) {
+            connectionType = 'role-based connection';
+            connectionStrength = 'medium';
+            connectionDetails = `Role: ${foundRole}`;
+            mediumPriorityCount++;
+          }
         }
         
-        // Only include if we found a connection
-        if (connectionType) {
-          filteredConnections.push({...item, connectionType});
-        }
-      }
-      
-      if (filteredConnections.length === 0) {
-        addLog('No connections found. Found people at target company but none from your previous workplace or school.', 'warning');
-        setLoading(false);
-        return;
-      }
-
-      addLog(`Found ${filteredConnections.length} connections from your network!`, 'success');
-      const allSearchResults = filteredConnections;
-
-      // Step 2: Process each profile
-      const processedConnections = [];
-      
-      for (let i = 0; i < allSearchResults.length; i++) {
-        const item = allSearchResults[i];
-        addLog(`Processing ${item.connectionType} profile ${i + 1}/${allSearchResults.length}: ${item.title}`, 'info');
+        addLog(`Processing profile ${i + 1}/${searchData.items.length}: ${title} (${connectionType})`, 'info');
         
         // Extract profile information
         const profileUrl = item.link;
-        const title = item.title || 'Unknown Title';
-        const snippet = item.snippet || '';
-        
-        // Extract name from LinkedIn profile title
         const extractedName = extractNameFromProfile(title);
         
         // Generate email patterns using the connection's name
         const emailPatterns = generateEmailPatterns(extractedName, formData.targetCompany);
         
-        // Use OpenAI for connection analysis (if available)
+        // Use OpenAI for connection analysis (if available and high-priority)
         let connectionAnalysis = null;
-        if (process.env.REACT_APP_OPENAI_API_KEY) {
+        if (process.env.REACT_APP_OPENAI_API_KEY && connectionStrength === 'high') {
           try {
             const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
               method: 'POST',
@@ -131,7 +129,7 @@ const ConnectionFinder = () => {
                 model: 'gpt-3.5-turbo',
                 messages: [{
                   role: 'user',
-                  content: `Analyze this potential connection: ${title} at ${formData.targetCompany}. Previous company: ${formData.previousCompany}, School: ${formData.school}. Provide: 1) Connection strength (1-10), 2) Outreach approach, 3) Common ground points, 4) Professional value. Keep it concise.`
+                  content: `Analyze this potential connection: ${title} at ${formData.targetCompany}. Previous company: ${formData.previousCompany}, School: ${formData.school}. Connection type: ${connectionType}. Provide: 1) Connection strength (1-10), 2) Outreach approach, 3) Common ground points, 4) Professional value. Keep it concise.`
                 }],
                 max_tokens: 200
               })
@@ -151,10 +149,11 @@ const ConnectionFinder = () => {
           profileUrl,
           title,
           snippet,
-          extractedName,
           emailPatterns,
           connectionAnalysis,
-          connectionType: item.connectionType,
+          connectionType,
+          connectionStrength,
+          connectionDetails,
           discoveredAt: new Date().toISOString()
         };
 
@@ -162,8 +161,13 @@ const ConnectionFinder = () => {
         addLog(`Profile ${i + 1} processed successfully`, 'success');
         
         // Small delay to avoid overwhelming APIs
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
+      
+      // Summary of findings
+      addLog(`🎯 Analysis complete! Found ${highPriorityCount} high-priority connections and ${mediumPriorityCount} medium-priority connections`, 'success');
+
+
 
       setConnections(processedConnections);
       setSearchComplete(true);
@@ -321,21 +325,45 @@ const ConnectionFinder = () => {
             <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-green-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
               <h2 className="text-2xl font-bold text-white mb-6">Found Connections ({connections.length})</h2>
               
-              <div className="space-y-6">
-                {connections.map((connection) => (
-                  <div key={connection.id} className="bg-slate-900/50 rounded-xl p-6 border border-slate-700/50">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{connection.title}</h3>
-                        <p className="text-sm text-slate-400 mt-1">Extracted name: {connection.extractedName}</p>
-                        <span className={`inline-block mt-1 text-xs px-2 py-1 rounded ${
-                          connection.connectionType === 'work alumni' ? 'bg-blue-900/50 text-blue-300' : 'bg-green-900/50 text-green-300'
-                        }`}>
-                          {connection.connectionType}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">#{connection.id}</span>
-                    </div>
+                             <div className="space-y-6">
+                 {connections
+                   .sort((a, b) => {
+                     // Sort by priority: high > medium > low
+                     const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+                     return priorityOrder[b.connectionStrength] - priorityOrder[a.connectionStrength];
+                   })
+                   .map((connection) => (
+                   <div key={connection.id} className={`bg-slate-900/50 rounded-xl p-6 border ${
+                     connection.connectionStrength === 'high' ? 'border-blue-500/50' :
+                     connection.connectionStrength === 'medium' ? 'border-yellow-500/50' :
+                     'border-slate-700/50'
+                   }`}>
+                     <div className="flex justify-between items-start mb-4">
+                       <div className="flex-1">
+                         <h3 className="text-lg font-semibold text-white">{connection.title}</h3>
+                         {connection.connectionDetails && (
+                           <p className="text-sm text-slate-300 mt-1">{connection.connectionDetails}</p>
+                         )}
+                         <div className="flex items-center space-x-2 mt-2">
+                           <span className={`inline-block text-xs px-3 py-1 rounded-full font-medium ${
+                             connection.connectionType === 'work alumni' ? 'bg-blue-900/50 text-blue-300 border border-blue-700/50' :
+                             connection.connectionType === 'school alumni' ? 'bg-green-900/50 text-green-300 border border-green-700/50' :
+                             connection.connectionType === 'role-based connection' ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50' :
+                             'bg-slate-800 text-slate-400 border border-slate-600'
+                           }`}>
+                             {connection.connectionType.replace('-', ' ').toUpperCase()}
+                           </span>
+                           <span className={`inline-block text-xs px-2 py-1 rounded-full font-medium ${
+                             connection.connectionStrength === 'high' ? 'bg-green-900/50 text-green-300 border border-green-700/50' :
+                             connection.connectionStrength === 'medium' ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50' :
+                             'bg-slate-800 text-slate-400 border border-slate-600'
+                           }`}>
+                             {connection.connectionStrength.toUpperCase()}
+                           </span>
+                         </div>
+                       </div>
+                       <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded ml-4">#{connection.id}</span>
+                     </div>
                     
                     <p className="text-slate-300 mb-4">{connection.snippet}</p>
                     
