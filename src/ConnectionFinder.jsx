@@ -417,16 +417,17 @@ const ConnectionFinder = () => {
           </div>
         </div>
 
+        <>
         {/* Results Section */}
         {connections.length > 0 && (
-          <div className="relative mb-12">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-800/20 to-blue-800/20 rounded-2xl blur-xl"></div>
-            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-green-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Found Connections ({connections.length})</h2>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="relative mb-12">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-800/20 to-blue-800/20 rounded-2xl blur-xl"></div>
+              <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-green-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-white">Found Connections ({connections.length})</h2>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Work Alumni Column */}
                 <div>
                   <h3 className="text-xl font-semibold text-blue-300 mb-4 flex items-center">
@@ -434,6 +435,7 @@ const ConnectionFinder = () => {
                     Work Alumni ({connections.filter(conn => conn.connectionType === 'work alumni').length})
                   </h3>
                   <div className="space-y-4">
+                    <>
                     {connections
                       .filter(connection => connection.connectionType === 'work alumni')
                       .map((connection) => (
@@ -538,6 +540,7 @@ const ConnectionFinder = () => {
                           <p>No work alumni found</p>
                         </div>
                       )}
+                      </>
                     </div>
                   </div>
 
@@ -548,6 +551,7 @@ const ConnectionFinder = () => {
                       School Alumni ({connections.filter(conn => conn.connectionType === 'school alumni').length})
                     </h3>
                     <div className="space-y-4">
+                      <>
                       {connections
                         .filter(connection => connection.connectionType === 'school alumni')
                         .map((connection) => (
@@ -621,6 +625,7 @@ const ConnectionFinder = () => {
                             <p>No school alumni found</p>
                           </div>
                         )}
+                        </>
                     </div>
                   </div>
                 </div>
@@ -733,6 +738,7 @@ const ConnectionFinder = () => {
             </div>
           </div>
         )}
+        </>
 
         {/* Environment Info */}
         <div className="bg-slate-800/50 rounded-lg p-4 text-sm text-slate-300">
