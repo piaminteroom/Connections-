@@ -418,16 +418,16 @@ const ConnectionFinder = () => {
         </div>
 
         <>
-        {/* Results Section */}
-        {connections.length > 0 && (
-            <div className="relative mb-12">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-800/20 to-blue-800/20 rounded-2xl blur-xl"></div>
-              <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-green-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-white">Found Connections ({connections.length})</h2>
-                </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Results Section */}
+          {connections.length > 0 && (
+          <div className="relative mb-12">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-800/20 to-blue-800/20 rounded-2xl blur-xl"></div>
+            <div className="relative bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-green-900/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Found Connections ({connections.length})</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Work Alumni Column */}
                 <div>
                   <h3 className="text-xl font-semibold text-blue-300 mb-4 flex items-center">
@@ -435,112 +435,110 @@ const ConnectionFinder = () => {
                     Work Alumni ({connections.filter(conn => conn.connectionType === 'work alumni').length})
                   </h3>
                   <div className="space-y-4">
-                    <>
                     {connections
                       .filter(connection => connection.connectionType === 'work alumni')
                       .map((connection) => (
-                   <div key={connection.id} className={`bg-slate-900/50 rounded-xl p-6 border ${
-                     connection.connectionStrength === 'high' ? 'border-blue-500/50' :
-                     connection.connectionStrength === 'medium' ? 'border-yellow-500/50' :
-                     'border-slate-700/50'
-                   }`}>
-                     <div className="flex justify-between items-start mb-4">
-                       <div className="flex-1">
-                         <h3 className="text-lg font-semibold text-white">{connection.title}</h3>
-                         {connection.connectionDetails && (
-                           <p className="text-sm text-slate-300 mt-1">{connection.connectionDetails}</p>
-                         )}
-                         <div className="flex items-center space-x-2 mt-2">
-                           <span className={`inline-block text-xs px-3 py-1 rounded-full font-medium ${
-                             connection.connectionType === 'work alumni' ? 'bg-blue-900/50 text-blue-300 border border-blue-700/50' :
-                             connection.connectionType === 'school alumni' ? 'bg-green-900/50 text-green-300 border border-green-700/50' :
-                             connection.connectionType === 'role-based connection' ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50' :
-                             'bg-slate-800 text-slate-400 border border-slate-600'
-                           }`}>
-                             {connection.connectionType.replace('-', ' ').toUpperCase()}
-                           </span>
-                           <span className={`inline-block text-xs px-2 py-1 rounded-full font-medium ${
-                             connection.connectionStrength === 'high' ? 'bg-green-900/50 text-green-300 border border-green-700/50' :
-                             connection.connectionStrength === 'medium' ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50' :
-                             'bg-slate-800 text-slate-400 border border-slate-600'
-                           }`}>
-                             {connection.connectionStrength.toUpperCase()}
-                           </span>
-                         </div>
-                       </div>
-                       <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded ml-4">#{connection.id}</span>
-                     </div>
-                    
-                    <p className="text-slate-300 mb-4">{connection.snippet}</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <EmailVerifier 
-                          emailPatterns={connection.emailPatterns}
-                          connectionName={extractNameFromProfile(connection.title)}
-                          connectionId={connection.id}
-                          onVerificationComplete={(results) => {
-                            // Update connection with verification results
-                            const updatedConnections = connections.map(conn => 
-                              conn.id === connection.id 
-                                ? { ...conn, verificationResults: results }
-                                : conn
-                            );
-                            setConnections(updatedConnections);
-                          }}
-                        />
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium text-slate-400 mb-2">Profile Link</h4>
-                        <a
-                          href={connection.profileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded transition-colors"
-                        >
-                          View LinkedIn Profile
-                        </a>
-                      </div>
-                    </div>
-                    
-                    {connection.verificationResults && connection.verificationResults.length > 0 && (
-                      <div className="bg-green-900/20 rounded-lg p-4 border border-green-700/30 mb-4">
-                        <h4 className="text-sm font-medium text-green-400 mb-2">Best Email Option</h4>
-                        {(() => {
-                          const bestEmail = connection.verificationResults.find(r => r.is_valid && !r.is_disposable)?.email || 
-                                           connection.verificationResults.find(r => r.is_valid)?.email;
-                          if (bestEmail) {
-                            return (
-                              <div className="flex items-center space-x-2">
-                                <input
-                                  type="text"
-                                  value={bestEmail}
-                                  readOnly
-                                  className="flex-1 px-3 py-2 bg-green-900/50 border border-green-700/50 rounded text-white text-sm font-mono"
-                                />
-                                <button
-                                  onClick={() => copyToClipboard(bestEmail)}
-                                  className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
-                                >
-                                  Copy
-                                </button>
+                        <div key={connection.id} className={`bg-slate-900/50 rounded-xl p-6 border ${
+                          connection.connectionStrength === 'high' ? 'border-blue-500/50' :
+                          connection.connectionStrength === 'medium' ? 'border-yellow-500/50' :
+                          'border-slate-700/50'
+                        }`}>
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-white">{connection.title}</h3>
+                              {connection.connectionDetails && (
+                                <p className="text-sm text-slate-300 mt-1">{connection.connectionDetails}</p>
+                              )}
+                              <div className="flex items-center space-x-2 mt-2">
+                                <span className={`inline-block text-xs px-3 py-1 rounded-full font-medium ${
+                                  connection.connectionType === 'work alumni' ? 'bg-blue-900/50 text-blue-300 border border-blue-700/50' :
+                                  connection.connectionType === 'school alumni' ? 'bg-green-900/50 text-green-300 border border-green-700/50' :
+                                  connection.connectionType === 'role-based connection' ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50' :
+                                  'bg-slate-800 text-slate-400 border border-slate-600'
+                                }`}>
+                                  {connection.connectionType.replace('-', ' ').toUpperCase()}
+                                </span>
+                                <span className={`inline-block text-xs px-2 py-1 rounded-full font-medium ${
+                                  connection.connectionStrength === 'high' ? 'bg-green-900/50 text-green-300 border border-green-700/50' :
+                                  connection.connectionStrength === 'medium' ? 'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50' :
+                                  'bg-slate-800 text-slate-400 border border-slate-600'
+                                }`}>
+                                  {connection.connectionStrength.toUpperCase()}
+                                </span>
                               </div>
-                            );
-                          }
-                          return <p className="text-green-300 text-sm">No valid emails found</p>;
-                        })()}
-                      </div>
-                    )}
-                    
-                  </div>
+                            </div>
+                            <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded ml-4">#{connection.id}</span>
+                          </div>
+                          
+                          <p className="text-slate-300 mb-4">{connection.snippet}</p>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <EmailVerifier 
+                                emailPatterns={connection.emailPatterns}
+                                connectionName={extractNameFromProfile(connection.title)}
+                                connectionId={connection.id}
+                                onVerificationComplete={(results) => {
+                                  // Update connection with verification results
+                                  const updatedConnections = connections.map(conn => 
+                                    conn.id === connection.id 
+                                      ? { ...conn, verificationResults: results }
+                                      : conn
+                                  );
+                                  setConnections(updatedConnections);
+                                }}
+                              />
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium text-slate-400 mb-2">Profile Link</h4>
+                              <a
+                                href={connection.profileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded transition-colors"
+                              >
+                                View LinkedIn Profile
+                              </a>
+                            </div>
+                          </div>
+                          
+                          {connection.verificationResults && connection.verificationResults.length > 0 && (
+                            <div className="bg-green-900/20 rounded-lg p-4 border border-green-700/30 mb-4">
+                              <h4 className="text-sm font-medium text-green-400 mb-2">Best Email Option</h4>
+                              {(() => {
+                                const bestEmail = connection.verificationResults.find(r => r.is_valid && !r.is_disposable)?.email || 
+                                                 connection.verificationResults.find(r => r.is_valid)?.email;
+                                if (bestEmail) {
+                                  return (
+                                    <div className="flex items-center space-x-2">
+                                      <input
+                                        type="text"
+                                        value={bestEmail}
+                                        readOnly
+                                        className="flex-1 px-3 py-2 bg-green-900/50 border border-green-700/50 rounded text-white text-sm font-mono"
+                                      />
+                                      <button
+                                        onClick={() => copyToClipboard(bestEmail)}
+                                        className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
+                                      >
+                                        Copy
+                                      </button>
+                                    </div>
+                                  );
+                                }
+                                return <p className="text-green-300 text-sm">No valid emails found</p>;
+                              })()}
+                            </div>
+                          )}
+                          
+                        </div>
                       ))}
                       {connections.filter(conn => conn.connectionType === 'work alumni').length === 0 && (
                         <div className="text-center py-8 text-slate-400">
                           <p>No work alumni found</p>
                         </div>
                       )}
-                      </>
                     </div>
                   </div>
 
@@ -551,7 +549,6 @@ const ConnectionFinder = () => {
                       School Alumni ({connections.filter(conn => conn.connectionType === 'school alumni').length})
                     </h3>
                     <div className="space-y-4">
-                      <>
                       {connections
                         .filter(connection => connection.connectionType === 'school alumni')
                         .map((connection) => (
@@ -574,50 +571,50 @@ const ConnectionFinder = () => {
                               <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded ml-4">#{connection.id}</span>
                             </div>
                            
-                           <p className="text-slate-300 mb-4">{connection.snippet}</p>
+                            <p className="text-slate-300 mb-4">{connection.snippet}</p>
                            
-                           <div className="space-y-4">
-                             <div>
-                               <h4 className="text-sm font-medium text-slate-400 mb-2">Profile Link</h4>
-                               <a
-                                 href={connection.profileUrl}
-                                 target="_blank"
-                                 rel="noopener noreferrer"
-                                 className="inline-block px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded transition-colors"
-                               >
-                                 View LinkedIn Profile
-                               </a>
-                             </div>
+                            <div className="space-y-4">
+                              <div>
+                                <h4 className="text-sm font-medium text-slate-400 mb-2">Profile Link</h4>
+                                <a
+                                  href={connection.profileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-block px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded transition-colors"
+                                >
+                                  View LinkedIn Profile
+                                </a>
+                              </div>
                              
-                             {connection.verificationResults && connection.verificationResults.length > 0 && (
-                               <div className="bg-green-900/20 rounded-lg p-4 border border-green-700/30">
-                                 <h4 className="text-sm font-medium text-green-400 mb-2">Best Email Option</h4>
-                                 {(() => {
-                                   const bestEmail = connection.verificationResults.find(r => r.is_valid && !r.is_disposable)?.email || 
-                                                    connection.verificationResults.find(r => r.is_valid)?.email;
-                                   if (bestEmail) {
-                                     return (
-                                       <div className="flex items-center space-x-2">
-                                         <input
-                                           type="text"
-                                           value={bestEmail}
-                                           readOnly
-                                           className="flex-1 px-3 py-2 bg-green-900/50 border border-green-700/50 rounded text-white text-sm font-mono"
-                                         />
-                                         <button
-                                           onClick={() => copyToClipboard(bestEmail)}
-                                           className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
-                                         >
-                                           Copy
-                                         </button>
-                                       </div>
-                                     );
-                                   }
-                                   return <p className="text-green-300 text-sm">No valid emails found</p>;
-                                 })()}
-                               </div>
-                             )}
-                           </div>
+                              {connection.verificationResults && connection.verificationResults.length > 0 && (
+                                <div className="bg-green-900/20 rounded-lg p-4 border border-green-700/30">
+                                  <h4 className="text-sm font-medium text-green-400 mb-2">Best Email Option</h4>
+                                  {(() => {
+                                    const bestEmail = connection.verificationResults.find(r => r.is_valid && !r.is_disposable)?.email || 
+                                                     connection.verificationResults.find(r => r.is_valid)?.email;
+                                    if (bestEmail) {
+                                      return (
+                                        <div className="flex items-center space-x-2">
+                                          <input
+                                            type="text"
+                                            value={bestEmail}
+                                            readOnly
+                                            className="flex-1 px-3 py-2 bg-green-900/50 border border-green-700/50 rounded text-white text-sm font-mono"
+                                          />
+                                          <button
+                                            onClick={() => copyToClipboard(bestEmail)}
+                                            className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors"
+                                          >
+                                            Copy
+                                          </button>
+                                        </div>
+                                      );
+                                    }
+                                    return <p className="text-green-300 text-sm">No valid emails found</p>;
+                                  })()}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                         {connections.filter(conn => conn.connectionType === 'school alumni').length === 0 && (
@@ -625,7 +622,7 @@ const ConnectionFinder = () => {
                             <p>No school alumni found</p>
                           </div>
                         )}
-                        </>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -738,7 +735,6 @@ const ConnectionFinder = () => {
             </div>
           </div>
         )}
-        </>
 
         {/* Environment Info */}
         <div className="bg-slate-800/50 rounded-lg p-4 text-sm text-slate-300">
@@ -746,6 +742,7 @@ const ConnectionFinder = () => {
           <p>API Keys: OpenAI {process.env.REACT_APP_OPENAI_API_KEY ? 'YES' : 'NO'}, Google {process.env.REACT_APP_GOOGLE_SEARCH_API_KEY ? 'YES' : 'NO'}</p>
           <p>Component State: {JSON.stringify({loading, searchComplete, connections: connections.length})}</p>
         </div>
+        </>
       </div>
     </div>
   );
